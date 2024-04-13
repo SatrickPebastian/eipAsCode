@@ -18,12 +18,13 @@ type QueueInfo record {
 
 public class GenericSender {
     private map<ProtocolClient> clients = {};
+    private QueueInfo[] queues = [];
 
     public function init() {
         string? pipeConfig = env:get("OUTPUT_PIPES");
         if pipeConfig is string {
-            QueueInfo[] queues = parseOutputPipes(pipeConfig);
-            foreach var queue in queues {
+            self.queues = parseOutputPipes(pipeConfig);
+            foreach var queue in self.queues {
                 string protocol = getProtocol(queue.address);
                 if !self.clients.hasKey(protocol) {
                     self.clients[protocol] = initializeClient(protocol, queue.address, queue.name);
@@ -87,19 +88,20 @@ public class GenericSender {
         return {};
     }
 
-    // Send message to a specific broker
     public function sendMessage(string message) {
-        foreach var [protocol, client] in self.clients.entries() {
-            string queueName = getQueueName(client.protocol); // Assume this function is properly implemented
-            if protocol == "kafka" {
-                kafka:Producer kafkaProducer = <kafka:Producer>client.client;
-                kafka:Error? result = kafkaProducer->send({topic: queueName, value: message});
-            } else if protocol == "mqtt" {
-                mqtt:Client mqttClient = <mqtt:Client>client.client;
-                mqtt:Error? result = mqttClient->publishMessage({topic: queueName, message: message});
-            } else if protocol == "rabbitmq" {
-                rabbitmq:Client rabbitmqClient = <rabbitmq:Client>client.client;
-                rabbitmq:Error? result = rabbitmqClient->publishMessage({queueName: queueName, message: message});
+        foreach var queueInfo in self.queues {
+            ProtocolClient? client = self.clients[queueInfo.protocol];
+            if client is ProtocolClient {
+                if queueInfo.protocol == "kafka" {
+                    kafka:Producer kafkaProducer = <kafka:Producer>client.client;
+                    kafka:Error? result = kafkaProducer->send({topic: queueInfo.name, value: message});
+                } else if queueInfo.protocol == "mqtt" {
+                    mqtt:Client mqttClient = <mqtt:Client>client.client;
+                    mqtt:Error? result = mqttClient->publishMessage({topic: queueInfo.name, message: message});
+                } else if queueInfo.protocol == "rabbitmq" {
+                    rabbitmq:Client rabbitmqClient = <rabbitmq:Client>client.client;
+                    rabbitmq:Error? result = rabbitmqClient->publishMessage({queueName: queueInfo.name, message: message});
+                }
             }
         }
     }
@@ -114,13 +116,6 @@ public class GenericSender {
             return "rabbitmq";
         }
         return "unknown";
-    }
-
-    // Dummy implementation to extract queue name from the endpoint
-    function getQueueName(string endpoint) returns string {
-        // This needs to be implemented based on your specific URI format or other configuration details
-        string[] parts = endpoint.split("/");
-        return parts.length() > 1 ? parts[parts.length() - 1] : "default";
     }
 }
 
