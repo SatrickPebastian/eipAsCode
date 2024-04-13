@@ -11,18 +11,22 @@ type ProtocolClient record {
     any client;
 };
 
+type QueueInfo record {
+    string name;
+    string address;
+};
+
 public class GenericSender {
     private map<ProtocolClient> clients = {};
 
     public function init() {
-        // Read the env variable
         string? pipeConfig = env:get("OUTPUT_PIPES");
         if pipeConfig is string {
-            string[] pipes = pipeConfig.split(",");
-            foreach var pipe in pipes {
-                string protocol = getProtocol(pipe);
+            QueueInfo[] queues = parseOutputPipes(pipeConfig);
+            foreach var queue in queues {
+                string protocol = getProtocol(queue.address);
                 if !self.clients.hasKey(protocol) {
-                    self.clients[protocol] = initializeClient(protocol, pipe);
+                    self.clients[protocol] = initializeClient(protocol, queue.address, queue.name);
                 }
             }
         } else {
@@ -30,8 +34,34 @@ public class GenericSender {
         }
     }
 
-    // Create client instance based on protocol and endpoint
-    function initializeClient(string protocol, string endpoint) returns ProtocolClient {
+    function parseOutputPipes(string data) returns QueueInfo[] {
+        QueueInfo[] queues = [];
+        string[] entries = data.split(";");
+        foreach var entry in entries {
+            if (entry != "") {
+                string[] parts = entry.split(",");
+                string name = "";
+                string address = "";
+                foreach var part in parts {
+                    string[] keyValue = part.split("=");
+                    if (keyValue.length() == 2) {
+                        if (keyValue[0] == "name") {
+                            name = keyValue[1];
+                        } else if (keyValue[0] == "address") {
+                            address = keyValue[1];
+                        }
+                    }
+                }
+                if (name != "" && address != "") {
+                    queues.push({name: name, address: address});
+                }
+            }
+        }
+        return queues;
+    }
+
+    // Create client instance based on protocol, endpoint, and queue name
+    function initializeClient(string protocol, string endpoint, string queueName) returns ProtocolClient {
         if protocol == "kafka" {
             kafka:ProducerConfiguration producerConfig = {
                 bootstrapServers: endpoint
@@ -50,24 +80,26 @@ public class GenericSender {
                 port: 5672 // Default rabbitMQ port
             };
             rabbitmq:Client rabbitmqClient = new(rabbitmqConfig);
+            check rabbitmqClient->queueDeclare(queueName, durable = true, exclusive = false, autoDelete = false);
             return {protocol: "rabbitmq", client: rabbitmqClient};
         }
         io:println("Unsupported protocol: ", protocol);
         return {};
     }
 
-    // Send message to respective broker
+    // Send message to a specific broker
     public function sendMessage(string message) {
         foreach var [protocol, client] in self.clients.entries() {
+            string queueName = getQueueName(client.protocol); // Assume this function is properly implemented
             if protocol == "kafka" {
                 kafka:Producer kafkaProducer = <kafka:Producer>client.client;
-                kafka:Error? result = kafkaProducer->send({topic: "test-topic", value: message});
+                kafka:Error? result = kafkaProducer->send({topic: queueName, value: message});
             } else if protocol == "mqtt" {
                 mqtt:Client mqttClient = <mqtt:Client>client.client;
-                mqtt:Error? result = mqttClient->publishMessage({topic: "test", message: message});
+                mqtt:Error? result = mqttClient->publishMessage({topic: queueName, message: message});
             } else if protocol == "rabbitmq" {
                 rabbitmq:Client rabbitmqClient = <rabbitmq:Client>client.client;
-                rabbitmq:Error? result = rabbitmqClient->publishMessage({queueName: "test", message: message});
+                rabbitmq:Error? result = rabbitmqClient->publishMessage({queueName: queueName, message: message});
             }
         }
     }
@@ -78,10 +110,17 @@ public class GenericSender {
             return "kafka";
         } else if endpoint.startsWith("mqtt://") {
             return "mqtt";
-        } else if endpoint.contains("rabbitmq") {
+        } else if (endpoint.contains("rabbitmq")) {
             return "rabbitmq";
         }
         return "unknown";
+    }
+
+    // Dummy implementation to extract queue name from the endpoint
+    function getQueueName(string endpoint) returns string {
+        // This needs to be implemented based on your specific URI format or other configuration details
+        string[] parts = endpoint.split("/");
+        return parts.length() > 1 ? parts[parts.length() - 1] : "default";
     }
 }
 
