@@ -3,6 +3,7 @@ import ballerina/mqtt;
 import ballerina/rabbitmq;
 import ballerina/io;
 import ballerina/env;
+import ballerina/time;
 
 // Struct for configuration
 type ProtocolClient record {
@@ -87,5 +88,15 @@ public class GenericSender {
 public function main() {
     GenericSender sender = new;
     sender.init();
-    sender.sendMessage("Hello from Sender");
+
+    // Reading interval from ENV or default to 1000ms (1 message per second)
+    int interval = check int.fromString(env:get("INTERVAL") ?: "1000");
+    interval = interval < 34 ? interval : 34;  // Max 30 messages per second
+
+    int count = 0;
+    while (true) {
+        sender.sendMessage("Hello from Sender #" + count.toString());
+        count += 1;
+        time:sleep(interval);
+    }
 }
