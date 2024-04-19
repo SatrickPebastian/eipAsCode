@@ -1,0 +1,31 @@
+pipes:
+  - name: PipeA
+    dlq: true 
+    persistent: true
+  - name: PipeB
+    persistent: true
+  - name: PipeC
+
+filters:
+  - name: ComponentA
+    type: ContentBasedRouter
+    properties:
+      inputQueue: PipeA
+      outputQueues:
+        - PipeB
+        - PipeC
+    behavior:
+      conditions:
+        - condition: "message.type == 'type1'"
+          queue: PipeB
+        - condition: "message.type == 'type2'"
+          queue: PipeC
+
+deployment-environments: 
+  - pipes:
+      type: rabbitmq
+      address: http://localhost:15672
+      username: admin
+      password: admin
+  - filters:
+      type: docker-compose
