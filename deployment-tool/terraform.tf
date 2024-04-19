@@ -31,12 +31,3 @@ settings {
 }
 }
 
-resource "rabbitmq_queue" "PipeC" {
-name       = "PipeC"
-vhost      = "/"
-settings {
-  durable   = false
-  auto_delete = false
-}
-}
-

@@ -4,7 +4,6 @@ pipes:
     persistent: true
   - name: PipeB
     persistent: true
-  - name: PipeC
 
 filters:
   - name: ComponentA

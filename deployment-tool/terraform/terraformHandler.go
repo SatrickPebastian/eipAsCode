@@ -1,11 +1,9 @@
 package terraform
 
 import (
-    //"fmt"
-    //"io/ioutil"
-    //"strings"
-    "os"
+    "bytes" // Add this import to use bytes.Buffer
     "os/exec"
+	"diploy/parser"
 )
 
 func CheckTerraformInstalled() bool {
@@ -16,16 +14,29 @@ func CheckTerraformInstalled() bool {
 	return true
 }
 
-func ApplyTerraform() error {
-	cmd := exec.Command("terraform", "init")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
+func runTerraformCommand(args ...string) (string, error) {
+    cmd := exec.Command("terraform", args...)
+    var out bytes.Buffer
+    var stderr bytes.Buffer
+    cmd.Stdout = &out
+    cmd.Stderr = &stderr
+    err := cmd.Run()
+    if err != nil {
+        return stderr.String(), err
+    }
+    return out.String(), nil
+}
 
-	cmd = exec.Command("terraform", "apply", "-auto-approve")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+func ApplyTerraform(config parser.Config) (string, error) {
+    if _, err := runTerraformCommand("init"); err != nil {
+        return "", err
+    }
+    return runTerraformCommand("apply", "-auto-approve")
+}
+
+func DestroyTerraform(config parser.Config) (string, error) {
+    if _, err := runTerraformCommand("init"); err != nil {
+        return "", err
+    }
+    return runTerraformCommand("destroy", "-auto-approve")
 }

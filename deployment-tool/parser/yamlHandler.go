@@ -65,24 +65,3 @@ func ReadYAMLConfig(filepath string) (Config, error) {
     }
     return config, nil
 }
-
-func (p *Pipe) UnmarshalYAML(unmarshal func(interface{}) error) error {
-    // Define a secondary type to avoid recursion
-    type plain Pipe
-    if err := unmarshal((*plain)(p)); err != nil {
-        return err
-    }
-
-    // Set defaults for nil (unset) dlq and persistent
-    if p.DLQ == nil {
-        defaultDLQ := false
-        p.DLQ = &defaultDLQ
-    }
-    if p.Persistent == nil {
-        defaultPersistent := false
-        p.Persistent = &defaultPersistent
-    }
-    return nil
-}
-
-
