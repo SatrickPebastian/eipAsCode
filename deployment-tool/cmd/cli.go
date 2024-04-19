@@ -23,60 +23,57 @@ var applyCmd = &cobra.Command{
     Use:   "apply",
     Short: "Apply the EIP deployment specification",
     Long:  `This command applies the Terraform configuration specified in the deployment.yaml file.`,
-    Run: func(cmd *cobra.Command, args []string) {
+    RunE: func(cmd *cobra.Command, args []string) error {  // Use RunE to enable error returning
         fmt.Println("Loading YAML configuration...")
-        config, err := parser.ReadYAMLConfig("deployment.yaml")
-        if err != nil {
-            fmt.Printf("Error reading YAML file: %s\n", err)
-            return
+        
+        if configErr != nil {
+            return fmt.Errorf("Error reading YAML file: %s", configErr)
         }
 
         if !terraform.CheckTerraformInstalled() {
-            fmt.Println("Please install Terraform.")
-            return
+            return fmt.Errorf("Please install Terraform.")
         }
 
         fmt.Println("Applying Terraform configuration...")
         output, err := terraform.ApplyTerraform(config)
         if err != nil {
-            fmt.Printf("Failed to apply Terraform: %s\nError: %s", err, output)
-            return
+            fmt.Printf("Failed to apply Terraform: %s\nError: %s\n", err, output)
+            return err  // Return the error to stop the process
         }
 
         fmt.Println("Terraform has been successfully applied:", output)
+        return nil  // Return nil to indicate success
     },
 }
+
 
 var removeCmd = &cobra.Command{
     Use:   "remove",
     Short: "Remove the EIP deployment",
     Long:  `This command destroys the Terraform-managed infrastructure specified in the deployment.yaml file.`,
-    Run: func(cmd *cobra.Command, args []string) {
+    RunE: func(cmd *cobra.Command, args []string) error {
         fmt.Println("Initializing removal process...")
 
         if !terraform.CheckTerraformInstalled() {
-            fmt.Println("Please install Terraform.")
-            return
+            return fmt.Errorf("Please install Terraform")
         }
 
         fmt.Println("Destroying Terraform-managed infrastructure...")
         output, err := terraform.DestroyTerraform(config)
         if err != nil {
             fmt.Printf("Failed to destroy Terraform-managed resources: %s\nError details: %s\n", err, output)
-            return
+            return err
         }
 
         fmt.Println("Terraform-managed resources have been successfully destroyed.")
-        fmt.Println(output) 
+        fmt.Println(output)
+        return nil
     },
 }
 
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+func Execute() error {
+	return rootCmd.Execute()
 }
 
 func init() {
