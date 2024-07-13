@@ -1,0 +1,14 @@
+services:
+  costrouterdc:
+    environment:
+    - lowCostQueue=myPipe
+    - highCostQueue=myCoolMqttPipe
+    - inputQueue=productionPipe
+    image: pstopper/coolRouter
+  myrouterrouter:
+    environment:
+    - lowCostQueue=myPipe
+    - highCostQueue=myCoolMqttPipe
+    - inputQueue=productionPipe
+    image: pstopper/coolRouter
+version: "3"

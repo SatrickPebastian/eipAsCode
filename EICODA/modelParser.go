@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -19,7 +21,7 @@ func NewModelParser() *ModelParser {
 	return &ModelParser{}
 }
 
-// Parse parses the YAML file at the given path and returns a Model
+// Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -40,8 +42,129 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, fmt.Errorf("Parsing model failed: %w", err)
 	}
 
-	fmt.Printf("Parsed Model: %+v\n", model)
+	// Load types.yaml or mergedTypes.yaml
+	typesFilePath := filepath.Join("repositoryControllers", "types.yaml")
+	mergedTypesFilePath := filepath.Join("repositoryControllers", "mergedTypes.yaml")
+	var typesData []byte
+
+	if _, err := os.Stat(mergedTypesFilePath); err == nil {
+		typesData, err = ioutil.ReadFile(mergedTypesFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read mergedTypes.yaml: %w", err)
+		}
+	} else {
+		typesData, err = ioutil.ReadFile(typesFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read types.yaml: %w", err)
+		}
+	}
+
+	var combinedTypes models.CombinedTypes
+	err = yaml.Unmarshal(typesData, &combinedTypes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse types file: %w", err)
+	}
+
+	// Merge the parsed model with the loaded types and artifacts
+	err = parser.mergeModels(&model, &combinedTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Perform filter type enforcement checks
+	err = parser.checkFilterTypeEnforcements(&model)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Parsed and Merged Model: %+v\n", model)
 	return &model, nil
+}
+
+// mergeModels merges the parsed model with the loaded types and artifacts
+func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *models.CombinedTypes) error {
+	// Check for duplicate filter type names
+	filterTypeNames := make(map[string]bool)
+	for _, ft := range model.FilterTypes {
+		filterTypeNames[ft.Name] = true
+	}
+	for _, ft := range combinedTypes.FilterTypes {
+		if ft.Name == "" {
+			continue // Ignore empty filter types
+		}
+		if filterTypeNames[ft.Name] {
+			return fmt.Errorf("duplicate filter type name found: %s", ft.Name)
+		}
+		model.FilterTypes = append(model.FilterTypes, ft)
+	}
+
+	// Check for duplicate deployment artifact names
+	deploymentArtifactNames := make(map[string]bool)
+	for _, da := range model.DeploymentArtifacts {
+		deploymentArtifactNames[da.Name] = true
+	}
+	for _, da := range combinedTypes.DeploymentArtifacts {
+		if deploymentArtifactNames[da.Name] {
+			return fmt.Errorf("duplicate deployment artifact name found: %s", da.Name)
+		}
+		model.DeploymentArtifacts = append(model.DeploymentArtifacts, da)
+	}
+
+	return nil
+}
+
+// checkFilterTypeEnforcements checks if filters have the required properties based on their type
+func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) error {
+	filterTypeMap := make(map[string]models.FilterType)
+	for _, ft := range model.FilterTypes {
+		filterTypeMap[ft.Name] = ft
+	}
+
+	for _, filter := range model.Filters {
+		if filterType, exists := filterTypeMap[filter.Type]; exists {
+			if filter.Type == "Custom" {
+				continue // Allow any properties for Custom type
+			}
+
+			if filterType.Configs != nil {
+				for _, enforced := range filterType.Configs.Enforces {
+					if !parser.hasProperty(filter, enforced) {
+						return fmt.Errorf("filter %s of type %s is missing required property: %s", filter.Name, filter.Type, enforced)
+					}
+				}
+
+				// Check for invalid properties
+				allowedProps := append(filterType.Configs.Enforces, "id", "name", "host", "type", "mappings", "artifact")
+				for opt := range filterType.Configs.Optional {
+					allowedProps = append(allowedProps, opt)
+				}
+
+				for prop := range filter.AdditionalProps {
+					if !parser.isAllowedProperty(prop, allowedProps) {
+						return fmt.Errorf("filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// hasProperty checks if a filter has a specified property
+func (parser *ModelParser) hasProperty(filter models.Filter, property string) bool {
+	_, exists := filter.AdditionalProps[property]
+	return exists
+}
+
+// isAllowedProperty checks if a property is allowed
+func (parser *ModelParser) isAllowedProperty(property string, allowedProps []string) bool {
+	for _, p := range allowedProps {
+		if p == property {
+			return true
+		}
+	}
+	return false
 }
 
 // performChecks performs various correctness checks on the parsed model

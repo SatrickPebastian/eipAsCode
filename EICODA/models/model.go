@@ -1,15 +1,13 @@
 package models
 
 type Model struct {
-	Pipes              Pipes               `yaml:"pipes"`
+	Pipes struct {
+		Queues []Queue `yaml:"queues"`
+	} `yaml:"pipes"`
 	Filters            []Filter            `yaml:"filters"`
 	Hosts              Hosts               `yaml:"hosts"`
 	FilterTypes        []FilterType        `yaml:"filterTypes"`
 	DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
-}
-
-type Pipes struct {
-	Queues []Queue `yaml:"queues"`
 }
 
 type Queue struct {
@@ -17,16 +15,17 @@ type Queue struct {
 	Name     string `yaml:"name"`
 	Host     string `yaml:"host"`
 	Protocol string `yaml:"protocol"`
-	Configs  string `yaml:"configs,omitempty"`
+	Configs  string `yaml:"configs"`
 }
 
 type Filter struct {
-	ID       string   `yaml:"id"`
-	Name     string   `yaml:"name"`
-	Host     string   `yaml:"host"`
-	Type     string   `yaml:"type"`
-	Mappings []string `yaml:"mappings"`
-	Artifact string   `yaml:"artifact,omitempty"`
+	ID                string            `yaml:"id"`
+	Name              string            `yaml:"name"`
+	Host              string            `yaml:"host"`
+	Type              string            `yaml:"type"`
+	Mappings          []string          `yaml:"mappings"`
+	Artifact          string            `yaml:"artifact"`
+	AdditionalProps   map[string]string `yaml:",inline"`
 }
 
 type Hosts struct {
@@ -35,17 +34,17 @@ type Hosts struct {
 }
 
 type Host struct {
-	ID     string `yaml:"id"`
-	Name   string `yaml:"name"`
-	Type   string `yaml:"type"`
-	Configs string `yaml:"configs,omitempty"`
+	ID      string `yaml:"id"`
+	Name    string `yaml:"name"`
+	Type    string `yaml:"type"`
+	Configs string `yaml:"configs"`
 }
 
 type FilterType struct {
 	Name        string             `yaml:"name"`
 	Artifact    string             `yaml:"artifact,omitempty"`
-	DerivesFrom string             `yaml:"derivesFrom,omitempty"`
 	Configs     *FilterTypeConfigs `yaml:"configs,omitempty"`
+	DerivedFrom string             `yaml:"derivedFrom,omitempty"`
 }
 
 type FilterTypeConfigs struct {
@@ -58,4 +57,9 @@ type DeploymentArtifact struct {
 	Type          string   `yaml:"type"`
 	Image         string   `yaml:"image"`
 	InternalPipes []string `yaml:"internalPipes"`
+}
+
+type CombinedTypes struct {
+	FilterTypes        []FilterType        `yaml:"filterTypes"`
+	DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
 }

@@ -38,7 +38,8 @@ filters:
   - id: 577a26d2-216c-4e6e-95e0-e7808f8394
     name: "myRouterRouter"
     host: "productionComposeEU"
-    type: "Custom"
+    type: "Ufff"
+    routingCriterias: "asdasd"
     mappings: 
       - "lowCostQueue:myPipe"
       - "highCostQueue:myCoolMqttPipe"

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: costrouter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: costrouter
+  template:
+    metadata:
+      labels:
+        app: costrouter
+    spec:
+      containers:
+      - env:
+        - name: lowCostQueue
+          value: myPipe
+        - name: highCostQueue
+          value: myCoolMqttPipe
+        - name: inputQueue
+          value: productionPipe
+        image: pstopper/coolRouter
+        name: costrouter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: costrouter
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: costrouter
