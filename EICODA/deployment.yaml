@@ -1,0 +1,65 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec8e1d
+      name: "myPipe"
+      host: "myInternalRabbitMQ"
+      protocol: "amqp"
+      configs: 
+    - id: 3ca7dca6-3b6c-4afa-9808-7df313e7be60
+      name: "myCoolMqttPipe"
+      host: "myInternalRabbitMQ"
+      protocol: "amqp"
+      configs: 
+    - id: 3396569f-ea82-4461-98e3-38a12105af08
+      name: "productionPipe"
+      host: "myInternalRabbitMQ"
+      protocol: "amqp"
+      configs: 
+
+filters:
+  - id: 7d884200-5583-435a-a5fe-80b9be4dcaec
+    name: "costRouter"
+    host: "productionKubernetesEU"
+    type: "Custom"
+    mappings: 
+      - "lowCostQueue:myPipe"
+      - "highCostQueue:myCoolMqttPipe"
+      - "inputQueue:productionPipe"
+    artifact: "routerDockerArtifact"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f8394f7
+    name: "costRouterDC"
+    host: "productionComposeEU"
+    type: "Custom"
+    mappings: 
+      - "lowCostQueue:myPipe"
+      - "highCostQueue:myCoolMqttPipe"
+      - "inputQueue:productionPipe"
+    artifact: "routerDockerArtifact"
+
+hosts:
+  pipeHosts:
+    - id: b8156cf9-cdb9-41ae-a13f-543fd75f5b70
+      name: "myInternalRabbitMQ"
+      type: "RabbitMQ"
+      configs:
+  filterHosts:
+    - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf22
+      name: "productionKubernetesEU"
+      type: "Kubernetes"
+      configs:
+    - id: 8ecf3669-5f89-4009-b50b-a01d9dab0981
+      name: "productionComposeEU"
+      type: "DockerCompose"
+      configs:
+
+filterTypes:
+  - name: 
+    artifact:
+    configs:
+    derivedFrom:
+
+deploymentArtifacts:
+  name: "routerDockerArtifact"
+  type: "Docker"
+  image: pstopper/coolRouter
+  internalPipes: ["lowCostQueue", "highCostQueue", "inputQueue"]

@@ -44,10 +44,12 @@ type DeploymentEnvironment struct {
 }
 
 type EnvironmentPipes struct {
-    Type     string `yaml:"type"`
-    Address  string `yaml:"address"`
-    Username string `yaml:"username"`
-    Password string `yaml:"password"`
+    Type       string  `yaml:"type"`
+    Address    string  `yaml:"address"`
+    HttpPort   *int    `yaml:"http-port"`
+    AmqpPort   *int    `yaml:"amqp-port"`
+    Username   string  `yaml:"username"`
+    Password   string  `yaml:"password"`
 }
 
 type EnvironmentFilters struct {

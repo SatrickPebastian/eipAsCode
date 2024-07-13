@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: PipeB-binding
+spec:
+  type: bindings.rabbitmq
+  version: v1
+  metadata:
+  - name: queueName
+    value: PipeB
+  - name: host
+    value: amqp://localhost:5672
+  - name: username
+    value: admin
+  - name: password
+    value: admin

@@ -1,0 +1,31 @@
+filterTypes:
+  - name: Router
+    configs:
+      enforces: ["routingCriterias"]
+      optional:
+        interval: 10
+  - name: Transformator
+    configs:
+      enforces: ["sourceFormat", "targetFormat", "transformationRules"]
+  - name: ConfigurableRouter
+    artifact: configurableRouterArtifact
+    derivesFrom: Router
+  - name: ConfigurableTransformator
+    artifact: configurableTransformatorArtifact
+    derivesFrom: Transformator
+  - name: Custom
+
+deploymentArtifacts:
+  - name: messageFilterArtifact
+    image: eicoda/message-filter:latest
+    type: Docker
+    internalPipes: ["inputPipes", "outputPipes"]
+  - name: configurableRouterArtifact
+    image: eicoda/configurable-router:latest
+    type: Docker
+    internalPipes: ["inputPipes", "outputPipes"]
+  - name: configurableTransformatorArtifact
+    image: eicoda/configurable-transformator:latest
+    type: Docker
+    internalPipes: ["inputPipes", "outputPipes"]
+

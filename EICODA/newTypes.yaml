@@ -1,0 +1,11 @@
+filterTypes:
+  - name: MessageFilter
+    artifact: MessageFilterArtifact
+    configs:
+      enforces: ["filterCriteria"]
+
+deploymentArtifacts:
+  - name: MessageFilterArtifact
+    image: eicoda/message-filter:latest
+    type: Docker
+    internalPipes: ["inputPipes", "outputPipes"]

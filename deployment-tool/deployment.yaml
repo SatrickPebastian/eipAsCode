@@ -1,5 +1,6 @@
 pipes:
-  - name: PipeA
+  - name: HighCostQueue
+    type: 
     dlq: true 
     persistent: true
   - name: PipeB
@@ -8,11 +9,11 @@ pipes:
 filters:
   - name: ComponentA
     type: ContentBasedRouter
-    properties:
-      inputQueue: PipeA
-      outputQueues:
-        - PipeB
-        - PipeC
+    inputQueues: 
+      HighCostQueue:PipeA
+    outputQueues:
+      - PipeB
+      - PipeC
     behavior:
       conditions:
         - condition: "message.type == 'type1'"
@@ -20,10 +21,14 @@ filters:
         - condition: "message.type == 'type2'"
           queue: PipeC
 
+deployment-hosts:
+
 deployment-environments: 
   - pipes:
       type: rabbitmq
-      address: http://localhost:15672
+      address: localhost
+      http-port: 15672
+      amqp-port: 5672
       username: admin
       password: admin
   - filters:
