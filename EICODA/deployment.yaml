@@ -35,6 +35,15 @@ filters:
       - "highCostQueue:myCoolMqttPipe"
       - "inputQueue:productionPipe"
     artifact: "routerDockerArtifact"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f8394
+    name: "myRouterRouter"
+    host: "productionComposeEU"
+    type: "Custom"
+    mappings: 
+      - "lowCostQueue:myPipe"
+      - "highCostQueue:myCoolMqttPipe"
+      - "inputQueue:productionPipe"
+    artifact: "routerDockerArtifact"
 
 hosts:
   pipeHosts:
@@ -59,7 +68,7 @@ filterTypes:
     derivedFrom:
 
 deploymentArtifacts:
-  name: "routerDockerArtifact"
-  type: "Docker"
-  image: pstopper/coolRouter
-  internalPipes: ["lowCostQueue", "highCostQueue", "inputQueue"]
+  - name: "routerDockerArtifact"
+    type: "Docker"
+    image: pstopper/coolRouter
+    internalPipes: ["lowCostQueue", "highCostQueue", "inputQueue"]

@@ -7,40 +7,19 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v2"
+	"eicoda/models"
 )
-
-// FilterType represents the structure of a filter type
-type FilterType struct {
-	Name        string             `yaml:"name"`
-	Artifact    string             `yaml:"artifact,omitempty"`
-	DerivesFrom string             `yaml:"derivesFrom,omitempty"`
-	Configs     *FilterTypeConfigs `yaml:"configs,omitempty"`
-}
-
-// FilterTypeConfigs represents the structure of the configs field in a filter type
-type FilterTypeConfigs struct {
-	Enforces []string               `yaml:"enforces,omitempty"`
-	Optional map[string]interface{} `yaml:"optional,omitempty"`
-}
-
-// DeploymentArtifact represents the structure of an artifact in the artifacts.yaml file
-type DeploymentArtifact struct {
-	Name          string   `yaml:"name"`
-	Image         string   `yaml:"image"`
-	Type          string   `yaml:"type"`
-	InternalPipes []string `yaml:"internalPipes"`
-}
 
 // CombinedTypes represents the structure of the combined types and artifacts YAML file
 type CombinedTypes struct {
-	FilterTypes        []FilterType        `yaml:"filterTypes"`
-	DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
+	FilterTypes        []models.FilterType        `yaml:"filterTypes"`
+	DeploymentArtifacts []models.DeploymentArtifact `yaml:"deploymentArtifacts"`
 }
 
 // TypeController handles operations related to filter types and artifacts
 type TypeController struct {
-	filterTypes        []FilterType
-	deploymentArtifacts []DeploymentArtifact
+	filterTypes        []models.FilterType
+	deploymentArtifacts []models.DeploymentArtifact
 }
 
 // NewTypeController creates a new instance of TypeController and loads the initial data
@@ -144,7 +123,7 @@ func (tc *TypeController) AddType(path string) error {
 }
 
 // validateFilterType validates the structure of a filter type
-func validateFilterType(ft FilterType) error {
+func validateFilterType(ft models.FilterType) error {
 	if ft.Name == "" {
 		return fmt.Errorf("name is required")
 	}

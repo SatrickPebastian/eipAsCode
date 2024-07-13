@@ -1,13 +1,15 @@
 package models
 
 type Model struct {
-	Pipes struct {
-		Queues []Queue `yaml:"queues"`
-	} `yaml:"pipes"`
-	Filters           []Filter           `yaml:"filters"`
-	Hosts             Hosts              `yaml:"hosts"`
-	FilterTypes       []FilterType       `yaml:"filterTypes"`
-	DeploymentArtifacts DeploymentArtifact `yaml:"deploymentArtifacts"`
+	Pipes              Pipes               `yaml:"pipes"`
+	Filters            []Filter            `yaml:"filters"`
+	Hosts              Hosts               `yaml:"hosts"`
+	FilterTypes        []FilterType        `yaml:"filterTypes"`
+	DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
+}
+
+type Pipes struct {
+	Queues []Queue `yaml:"queues"`
 }
 
 type Queue struct {
@@ -15,7 +17,7 @@ type Queue struct {
 	Name     string `yaml:"name"`
 	Host     string `yaml:"host"`
 	Protocol string `yaml:"protocol"`
-	Configs  string `yaml:"configs"`
+	Configs  string `yaml:"configs,omitempty"`
 }
 
 type Filter struct {
@@ -24,7 +26,7 @@ type Filter struct {
 	Host     string   `yaml:"host"`
 	Type     string   `yaml:"type"`
 	Mappings []string `yaml:"mappings"`
-	Artifact string   `yaml:"artifact"`
+	Artifact string   `yaml:"artifact,omitempty"`
 }
 
 type Hosts struct {
@@ -33,17 +35,22 @@ type Hosts struct {
 }
 
 type Host struct {
-	ID      string `yaml:"id"`
-	Name    string `yaml:"name"`
-	Type    string `yaml:"type"`
-	Configs string `yaml:"configs"`
+	ID     string `yaml:"id"`
+	Name   string `yaml:"name"`
+	Type   string `yaml:"type"`
+	Configs string `yaml:"configs,omitempty"`
 }
 
 type FilterType struct {
-	Name        string `yaml:"name"`
-	Artifact    string `yaml:"artifact"`
-	Configs     string `yaml:"configs"`
-	DerivedFrom string `yaml:"derivedFrom"`
+	Name        string             `yaml:"name"`
+	Artifact    string             `yaml:"artifact,omitempty"`
+	DerivesFrom string             `yaml:"derivesFrom,omitempty"`
+	Configs     *FilterTypeConfigs `yaml:"configs,omitempty"`
+}
+
+type FilterTypeConfigs struct {
+	Enforces []string               `yaml:"enforces,omitempty"`
+	Optional map[string]interface{} `yaml:"optional,omitempty"`
 }
 
 type DeploymentArtifact struct {

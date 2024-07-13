@@ -21,7 +21,8 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 	for _, filter := range model.Filters {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "Kubernetes" {
-			deployment, service := createKubernetesResources(filter, model.DeploymentArtifacts.Image)
+			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
+			deployment, service := createKubernetesResources(filter, image)
 			resources = append(resources, deployment, service)
 		}
 	}

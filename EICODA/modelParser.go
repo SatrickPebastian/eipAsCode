@@ -164,11 +164,6 @@ func (parser *ModelParser) checkFilterHosts(model *models.Model) error {
 
 // checkFilterMappings checks if filter mappings are correct based on deployment artifacts
 func (parser *ModelParser) checkFilterMappings(model *models.Model) error {
-	internalPipesSet := make(map[string]bool)
-	for _, internalPipe := range model.DeploymentArtifacts.InternalPipes {
-		internalPipesSet[internalPipe] = true
-	}
-
 	definedPipes := make(map[string]bool)
 	for _, queue := range model.Pipes.Queues {
 		definedPipes[queue.Name] = true
@@ -180,8 +175,20 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model) error {
 			if len(parts) != 2 {
 				return fmt.Errorf("invalid mapping format: %s", mapping)
 			}
-			if !internalPipesSet[parts[0]] {
-				return fmt.Errorf("mapping internal pipe %s not defined in deployment artifact %s", parts[0], model.DeploymentArtifacts.Name)
+			internalPipeFound := false
+			for _, artifact := range model.DeploymentArtifacts {
+				for _, internalPipe := range artifact.InternalPipes {
+					if parts[0] == internalPipe {
+						internalPipeFound = true
+						break
+					}
+				}
+				if internalPipeFound {
+					break
+				}
+			}
+			if !internalPipeFound {
+				return fmt.Errorf("mapping internal pipe %s not defined in any deployment artifact", parts[0])
 			}
 			if !definedPipes[parts[1]] {
 				return fmt.Errorf("mapping target pipe %s not defined in queues", parts[1])
@@ -190,15 +197,21 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model) error {
 	}
 
 	// Ensure all internal pipes are covered in the mappings
-	for _, filter := range model.Filters {
-		mappedPipes := make(map[string]bool)
-		for _, mapping := range filter.Mappings {
-			parts := strings.Split(mapping, ":")
-			mappedPipes[parts[0]] = true
+	for _, artifact := range model.DeploymentArtifacts {
+		internalPipesSet := make(map[string]bool)
+		for _, internalPipe := range artifact.InternalPipes {
+			internalPipesSet[internalPipe] = true
 		}
-		for internalPipe := range internalPipesSet {
-			if !mappedPipes[internalPipe] {
-				return fmt.Errorf("internal pipe %s is missing in filter mappings for deployment artifact %s", internalPipe, model.DeploymentArtifacts.Name)
+		for _, filter := range model.Filters {
+			mappedPipes := make(map[string]bool)
+			for _, mapping := range filter.Mappings {
+				parts := strings.Split(mapping, ":")
+				mappedPipes[parts[0]] = true
+			}
+			for internalPipe := range internalPipesSet {
+				if !mappedPipes[internalPipe] {
+					return fmt.Errorf("internal pipe %s is missing in filter mappings for deployment artifact %s", internalPipe, artifact.Name)
+				}
 			}
 		}
 	}

@@ -21,7 +21,8 @@ func (t *DockerComposeTransformator) Transform(model *models.Model) error {
 	for _, filter := range model.Filters {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "DockerCompose" {
-			service := createDockerComposeService(filter, model.DeploymentArtifacts.Image)
+			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
+			service := createDockerComposeService(filter, image)
 			serviceName := utils.SanitizeName(filter.Name)
 			services[serviceName] = service
 		}
