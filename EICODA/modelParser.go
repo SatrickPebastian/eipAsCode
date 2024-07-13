@@ -77,6 +77,12 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, err
 	}
 
+	// Check if filter types are valid
+	err = parser.checkFilterTypes(&model)
+	if err != nil {
+		return nil, err
+	}
+
 	fmt.Printf("Parsed and Merged Model: %+v\n", model)
 	return &model, nil
 }
@@ -145,6 +151,22 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 					}
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+// checkFilterTypes checks if filter types are valid
+func (parser *ModelParser) checkFilterTypes(model *models.Model) error {
+	validTypes := make(map[string]bool)
+	for _, ft := range model.FilterTypes {
+		validTypes[ft.Name] = true
+	}
+
+	for _, filter := range model.Filters {
+		if !validTypes[filter.Type] {
+			return fmt.Errorf("filter %s has an invalid type: %s", filter.Name, filter.Type)
 		}
 	}
 
