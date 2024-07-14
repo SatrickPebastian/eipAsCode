@@ -60,7 +60,6 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, fmt.Errorf("failed to parse types file: %w", err)
 	}
 
-	// Add log to see combinedTypes content
 	log.Printf("CombinedTypes before merging: %+v\n", combinedTypes)
 
 	// Merge the parsed model with the loaded types and artifacts
@@ -69,8 +68,10 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, err
 	}
 
-	// Add log to see combinedTypes content after merging
 	log.Printf("CombinedTypes after merging: %+v\n", combinedTypes)
+
+	// Resolve inheritance for filter types
+	parser.resolveInheritance(&combinedTypes)
 
 	// Perform correctness checks
 	err = parser.performChecks(&model)
@@ -126,6 +127,63 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 	return nil
 }
 
+// resolveInheritance resolves the inheritance hierarchy for filter types
+func (parser *ModelParser) resolveInheritance(combinedTypes *models.CombinedTypes) {
+	filterTypeMap := make(map[string]*models.FilterType)
+	for i, ft := range combinedTypes.FilterTypes {
+		filterTypeMap[ft.Name] = &combinedTypes.FilterTypes[i]
+	}
+
+	for i := range combinedTypes.FilterTypes {
+		parser.inheritFilterTypeProperties(filterTypeMap, &combinedTypes.FilterTypes[i])
+	}
+}
+
+func (parser *ModelParser) inheritFilterTypeProperties(filterTypeMap map[string]*models.FilterType, ft *models.FilterType) {
+	if ft.DerivedFrom == "" {
+		return
+	}
+
+	parent, exists := filterTypeMap[ft.DerivedFrom]
+	if !exists {
+		log.Printf("Parent filter type %s not found for filter type %s", ft.DerivedFrom, ft.Name)
+		return
+	}
+
+	// Recursively inherit from the parent first
+	parser.inheritFilterTypeProperties(filterTypeMap, parent)
+
+	// Inherit configurations
+	if parent.Configs != nil {
+		if ft.Configs == nil {
+			ft.Configs = &models.FilterTypeConfigs{
+				Enforces: make([]string, len(parent.Configs.Enforces)),
+				Optional: make(map[string]interface{}),
+			}
+		}
+
+		// Inherit enforced configurations
+		ft.Configs.Enforces = append(parent.Configs.Enforces, ft.Configs.Enforces...)
+
+		// Inherit optional configurations
+		for k, v := range parent.Configs.Optional {
+			if _, exists := ft.Configs.Optional[k]; !exists {
+				ft.Configs.Optional[k] = v
+			}
+		}
+	} else if ft.Configs == nil {
+		ft.Configs = &models.FilterTypeConfigs{
+			Enforces: []string{},
+			Optional: make(map[string]interface{}),
+		}
+	}
+
+	// Inherit artifact if not set
+	if ft.Artifact == "" {
+		ft.Artifact = parent.Artifact
+	}
+}
+
 // checkFilterTypeEnforcements checks if filters have the required properties based on their type
 func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) error {
 	filterTypeMap := make(map[string]models.FilterType)
@@ -140,13 +198,21 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 
 		filterType, exists := filterTypeMap[filter.Type]
 		if !exists {
+			log.Printf("Filter type %s not found for filter %s", filter.Type, filter.Name)
 			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
 		}
 
 		filterValue := reflect.ValueOf(filter)
-		for _, enforced := range filterType.Configs.Enforces {
-			if !filterValue.FieldByName(enforced).IsValid() {
-				return fmt.Errorf("filter %s of type %s is missing required property: %s", filter.Name, filter.Type, enforced)
+		log.Printf("Filter value: %+v", filterValue)
+		if filterType.Configs != nil {
+			for _, enforced := range filterType.Configs.Enforces {
+				log.Printf("Checking if filter %v has property %s\n", filter, enforced)
+				field := filterValue.FieldByName(enforced)
+				log.Printf("Field: %+v", field)
+				if !field.IsValid() {
+					log.Printf("Filter %s of type %s is missing required property: %s\n", filter.Name, filter.Type, enforced)
+					return fmt.Errorf("filter %s of type %s is missing required property: %s", filter.Name, filter.Type, enforced)
+				}
 			}
 		}
 	}
@@ -169,11 +235,13 @@ func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combine
 
 		filterType, exists := filterTypeMap[filter.Type]
 		if !exists {
+			log.Printf("Filter type %s not found for filter %s", filter.Type, filter.Name)
 			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
 		}
 
 		if filterType.Artifact != "" {
 			if filter.Artifact != "" {
+				log.Printf("Filter %s of type %s is not allowed to set an artifact because the filter type already defines an artifact", filter.Name, filter.Type)
 				return fmt.Errorf("filter %s of type %s is not allowed to set an artifact because the filter type already defines an artifact", filter.Name, filter.Type)
 			}
 			filter.Artifact = filterType.Artifact
@@ -216,6 +284,12 @@ func (parser *ModelParser) performChecks(model *models.Model) error {
 
 	// Check the types of pipeHosts and filterHosts
 	err = parser.checkHostTypes(model)
+	if err != nil {
+		return err
+	}
+
+	// Check filter type enforcements
+	err = parser.checkFilterTypeEnforcements(model)
 	if err != nil {
 		return err
 	}

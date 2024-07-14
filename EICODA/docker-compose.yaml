@@ -7,8 +7,7 @@ services:
     image: pstopper/coolRouter
   myrouterrouter:
     environment:
-    - lowCostQueue=myPipe
-    - highCostQueue=myCoolMqttPipe
-    - inputQueue=productionPipe
-    image: pstopper/coolRouter
+    - inputPipes=myPipe
+    - outputPipes=myPipe
+    image: eicoda/configurable-router:latest
 version: "3"

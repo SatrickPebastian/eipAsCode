@@ -13,16 +13,18 @@ filterTypes:
     - transformationRules
 - name: ConfigurableRouter
   artifact: configurableRouterArtifact
-  derivesFrom: Router
+  derivedFrom: Router
 - name: ConfigurableTransformator
   artifact: configurableTransformatorArtifact
-  derivesFrom: Transformator
+  derivedFrom: Transformator
 - name: Custom
 - name: MessageFilter
   artifact: MessageFilterArtifact
   configs:
     enforces:
     - filterCriteria
+- name: MyCoolRouter
+  derivedFrom: ConfigurableRouter
 deploymentArtifacts:
 - name: messageFilterArtifact
   image: eicoda/message-filter:latest
