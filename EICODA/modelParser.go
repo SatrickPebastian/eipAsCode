@@ -172,12 +172,13 @@ func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combine
 			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
 		}
 
-		if filter.Artifact == "" && filterType.Artifact != "" {
+		if filterType.Artifact != "" {
+			if filter.Artifact != "" {
+				return fmt.Errorf("filter %s of type %s is not allowed to set an artifact because the filter type already defines an artifact", filter.Name, filter.Type)
+			}
 			filter.Artifact = filterType.Artifact
 			log.Printf("Filter %s of type %s is using artifact %s from filter type\n", filter.Name, filter.Type, filterType.Artifact)
-		}
-
-		if filter.Artifact != "" {
+		} else if filter.Artifact != "" {
 			log.Printf("Filter %s is using artifact %s\n", filter.Name, filter.Artifact)
 		}
 
