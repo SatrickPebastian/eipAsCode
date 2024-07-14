@@ -24,14 +24,14 @@ func NewModelParser() *ModelParser {
 // Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	data, err := ioutil.ReadFile(path)
-	if err != nil {
+	if (err != nil) {
 		log.Printf("Error reading file: %v\n", err)
 		return nil, err
 	}
 
 	var model models.Model
 	err = yaml.Unmarshal(data, &model)
-	if err != nil {
+	if (err != nil) {
 		log.Printf("Error unmarshalling YAML: %v\n", err)
 		return nil, err
 	}
@@ -43,19 +43,19 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 
 	if _, err := os.Stat(mergedTypesFilePath); err == nil {
 		typesData, err = ioutil.ReadFile(mergedTypesFilePath)
-		if err != nil {
+		if (err != nil) {
 			return nil, fmt.Errorf("failed to read mergedTypes.yaml: %w", err)
 		}
 	} else {
 		typesData, err = ioutil.ReadFile(typesFilePath)
-		if err != nil {
+		if (err != nil) {
 			return nil, fmt.Errorf("failed to read types.yaml: %w", err)
 		}
 	}
 
 	var combinedTypes models.CombinedTypes
 	err = yaml.Unmarshal(typesData, &combinedTypes)
-	if err != nil {
+	if (err != nil) {
 		return nil, fmt.Errorf("failed to parse types file: %w", err)
 	}
 
@@ -66,7 +66,7 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 
 	// Merge the parsed model with the loaded types and artifacts
 	err = parser.mergeModels(&model, &combinedTypes)
-	if err != nil {
+	if (err != nil) {
 		return nil, err
 	}
 
@@ -74,19 +74,19 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 
 	// Perform correctness checks
 	err = parser.performChecks(&model)
-	if err != nil {
+	if (err != nil) {
 		return nil, fmt.Errorf("Parsing model failed: %w", err)
 	}
 
 	// Apply artifacts and mappings from filter types if not set in the filter
 	err = parser.applyFilterTypeArtifacts(&model, &combinedTypes)
-	if err != nil {
+	if (err != nil) {
 		return nil, err
 	}
 
 	// Perform additional checks on mappings
 	err = parser.checkFilterMappings(&model, &combinedTypes)
-	if err != nil {
+	if (err != nil) {
 		return nil, err
 	}
 
@@ -401,6 +401,12 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			return fmt.Errorf("artifact %s not found for filter %s", filter.Artifact, filter.Name)
 		}
 
+		allowedProtocols := strings.Split(artifact.Protocol, ",")
+		protocolMap := make(map[string]bool)
+		for _, p := range allowedProtocols {
+			protocolMap[p] = true
+		}
+
 		for _, mapping := range filter.Mappings {
 			parts := strings.Split(mapping, ":")
 			if len(parts) != 2 {
@@ -416,8 +422,22 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			if !internalPipeFound {
 				return fmt.Errorf("mapping internal pipe %s not defined in deployment artifact %s", parts[0], artifact.Name)
 			}
-			if !definedPipes[parts[1]] {
-				return fmt.Errorf("mapping target pipe %s not defined in queues", parts[1])
+
+			pipeName := parts[1]
+			if !definedPipes[pipeName] {
+				return fmt.Errorf("mapping target pipe %s not defined in queues", pipeName)
+			}
+
+			var pipeProtocol string
+			for _, queue := range model.Pipes.Queues {
+				if queue.Name == pipeName {
+					pipeProtocol = queue.Protocol
+					break
+				}
+			}
+
+			if !protocolMap[pipeProtocol] {
+				return fmt.Errorf("protocol %s of pipe %s is not allowed by deployment artifact %s", pipeProtocol, pipeName, artifact.Name)
 			}
 		}
 

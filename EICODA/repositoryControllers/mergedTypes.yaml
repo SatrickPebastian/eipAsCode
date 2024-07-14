@@ -26,18 +26,21 @@ deploymentArtifacts:
 - name: messageFilterArtifact
   image: eicoda/message-filter:latest
   type: Docker
+  protocol: "amqp"
   internalPipes:
   - inputPipes
   - outputPipes
 - name: configurableRouterArtifact
   image: eicoda/configurable-router:latest
   type: Docker
+  protocol: "amqp"
   internalPipes:
   - inputPipes
   - outputPipes
 - name: configurableTransformatorArtifact
   image: eicoda/configurable-transformator:latest
   type: Docker
+  protocol: "amqp"
   internalPipes:
   - inputPipes
   - outputPipes

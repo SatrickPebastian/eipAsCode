@@ -41,10 +41,10 @@ type Host struct {
 }
 
 type FilterType struct {
-	Name        string        `yaml:"name"`
-	Artifact    string        `yaml:"artifact,omitempty"`
-	Configs     []FilterConfig `yaml:"configs,omitempty"`
-	DerivedFrom string        `yaml:"derivedFrom,omitempty"`
+	Name        string             `yaml:"name"`
+	Artifact    string             `yaml:"artifact,omitempty"`
+	Configs     []FilterConfig     `yaml:"configs,omitempty"`
+	DerivedFrom string             `yaml:"derivedFrom,omitempty"`
 }
 
 type FilterConfig struct {
@@ -56,6 +56,7 @@ type DeploymentArtifact struct {
 	Name          string   `yaml:"name"`
 	Type          string   `yaml:"type"`
 	Image         string   `yaml:"image"`
+	Protocol      string   `yaml:"protocol"`
 	InternalPipes []string `yaml:"internalPipes"`
 }
 

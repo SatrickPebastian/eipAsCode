@@ -31,3 +31,12 @@ resource "rabbitmq_queue" "productionPipe" {
   }
 }
 
+
+resource "rabbitmq_queue" "productionPipeee" {
+  name      = "productionPipeee"
+  settings {
+    durable    = true
+    auto_delete = false
+  }
+}
+

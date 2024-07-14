@@ -15,6 +15,11 @@ pipes:
       host: "myInternalRabbitMQ"
       protocol: "amqp"
       configs: 
+    - id: 3396569f-ea82-4461-98e3-38a12105
+      name: "productionPipeee"
+      host: "myInternalRabbitMQ"
+      protocol: "mqtt"
+      configs: 
 
 filters:
   - id: 7d884200-5583-435a-a5fe-80b9be4dcaec
@@ -41,7 +46,7 @@ filters:
     type: "MyCoolRouter"
     routingCriterias: "asdasd"
     mappings:
-      - "inputPipe:myPipe"
+      - "inputPipes:myPipe"
       - "outputPipes:myPipe"
       
 
@@ -65,5 +70,6 @@ hosts:
 deploymentArtifacts:
   - name: "routerDockerArtifact"
     type: "Docker"
+    protocol: "amqp"
     image: pstopper/coolRouter
     internalPipes: ["lowCostQueue", "highCostQueue", "inputQueue"]
