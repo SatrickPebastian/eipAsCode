@@ -1,0 +1,14 @@
+{
+    "rules": [
+      {
+        "condition": "message.includes('error')",
+        "outputQueue": "output1"
+      },
+      {
+        "condition": "message.includes('info')",
+        "outputQueue": "output2"
+      }
+    ],
+    "defaultOutputQueue": "output1"
+  }
+  

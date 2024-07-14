@@ -1,0 +1,11 @@
+[
+    {
+      "operation": "shift",
+      "spec": {
+        "oldField": "newField",
+        "nested": {
+          "oldNestedField": "newNestedField"
+        }
+      }
+    }
+  ]

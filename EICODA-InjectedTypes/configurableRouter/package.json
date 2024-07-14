@@ -1,0 +1,13 @@
+{
+    "name": "message-router",
+    "version": "1.0.0",
+    "description": "Message Router for AMQP",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "dependencies": {
+      "amqplib": "^0.7.1"
+    }
+  }
+  
