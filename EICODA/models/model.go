@@ -41,15 +41,15 @@ type Host struct {
 }
 
 type FilterType struct {
-	Name        string             `yaml:"name"`
-	Artifact    string             `yaml:"artifact,omitempty"`
-	Configs     *FilterTypeConfigs `yaml:"configs,omitempty"`
-	DerivedFrom string             `yaml:"derivedFrom,omitempty"`
+	Name        string        `yaml:"name"`
+	Artifact    string        `yaml:"artifact,omitempty"`
+	Configs     []FilterConfig `yaml:"configs,omitempty"`
+	DerivedFrom string        `yaml:"derivedFrom,omitempty"`
 }
 
-type FilterTypeConfigs struct {
-	Enforces []string               `yaml:"enforces,omitempty"`
-	Optional map[string]interface{} `yaml:"optional,omitempty"`
+type FilterConfig struct {
+	Name    string      `yaml:"name"`
+	Default interface{} `yaml:"default,omitempty"`
 }
 
 type DeploymentArtifact struct {

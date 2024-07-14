@@ -39,9 +39,11 @@ filters:
     name: "myRouterRouter"
     host: "productionComposeEU"
     type: "MyCoolRouter"
+    routingCriterias: "asdasd"
     mappings:
-      - "inputPipes:myPipe"
+      - "inputPipe:myPipe"
       - "outputPipes:myPipe"
+      
 
 hosts:
   pipeHosts:
@@ -59,11 +61,6 @@ hosts:
       type: "DockerCompose"
       configs:
 
-filterTypes:
-  - name: 
-    artifact:
-    configs:
-    derivedFrom:
 
 deploymentArtifacts:
   - name: "routerDockerArtifact"

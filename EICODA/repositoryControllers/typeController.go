@@ -129,9 +129,9 @@ func validateFilterType(ft models.FilterType) error {
 	}
 
 	if ft.Configs != nil {
-		for _, enforced := range ft.Configs.Enforces {
-			if enforced == "" {
-				return fmt.Errorf("enforced config value cannot be empty")
+		for _, config := range ft.Configs {
+			if config.Name == "" {
+				return fmt.Errorf("config name cannot be empty")
 			}
 		}
 	}

@@ -1,16 +1,14 @@
 filterTypes:
 - name: Router
   configs:
-    enforces:
-    - routingCriterias
-    optional:
-      interval: 10
+    - name: routingCriterias
+    - name: interval
+      default: 10
 - name: Transformator
   configs:
-    enforces:
-    - sourceFormat
-    - targetFormat
-    - transformationRules
+    - name: sourceFormat
+    - name: targetFormat
+    - name: transformationRules
 - name: ConfigurableRouter
   artifact: configurableRouterArtifact
   derivedFrom: Router
@@ -21,8 +19,7 @@ filterTypes:
 - name: MessageFilter
   artifact: MessageFilterArtifact
   configs:
-    enforces:
-    - filterCriteria
+    - name: filterCriteria
 - name: MyCoolRouter
   derivedFrom: ConfigurableRouter
 deploymentArtifacts:
