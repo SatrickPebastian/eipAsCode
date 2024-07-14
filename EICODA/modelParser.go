@@ -6,10 +6,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"gopkg.in/yaml.v2"
-	"eicoda/models" // Adjust the import path according to your module name
+	"eicoda/models"
 )
 
 // ModelParser handles parsing of deployment configuration files
@@ -36,12 +37,6 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, err
 	}
 
-	// Perform correctness checks
-	err = parser.performChecks(&model)
-	if err != nil {
-		return nil, fmt.Errorf("Parsing model failed: %w", err)
-	}
-
 	// Load types.yaml or mergedTypes.yaml
 	typesFilePath := filepath.Join("repositoryControllers", "types.yaml")
 	mergedTypesFilePath := filepath.Join("repositoryControllers", "mergedTypes.yaml")
@@ -65,20 +60,32 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, fmt.Errorf("failed to parse types file: %w", err)
 	}
 
+	// Add log to see combinedTypes content
+	log.Printf("CombinedTypes before merging: %+v\n", combinedTypes)
+
 	// Merge the parsed model with the loaded types and artifacts
 	err = parser.mergeModels(&model, &combinedTypes)
 	if err != nil {
 		return nil, err
 	}
 
-	// Perform filter type enforcement checks
-	err = parser.checkFilterTypeEnforcements(&model)
+	// Add log to see combinedTypes content after merging
+	log.Printf("CombinedTypes after merging: %+v\n", combinedTypes)
+
+	// Perform correctness checks
+	err = parser.performChecks(&model)
+	if err != nil {
+		return nil, fmt.Errorf("Parsing model failed: %w", err)
+	}
+
+	// Apply artifacts and mappings from filter types if not set in the filter
+	err = parser.applyFilterTypeArtifacts(&model, &combinedTypes)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if filter types are valid
-	err = parser.checkFilterTypes(&model)
+	// Perform additional checks on mappings
+	err = parser.checkFilterMappings(&model, &combinedTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -127,29 +134,19 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 	}
 
 	for _, filter := range model.Filters {
-		if filterType, exists := filterTypeMap[filter.Type]; exists {
-			if filter.Type == "Custom" {
-				continue // Allow any properties for Custom type
-			}
+		if filter.Type == "Custom" {
+			continue
+		}
 
-			if filterType.Configs != nil {
-				for _, enforced := range filterType.Configs.Enforces {
-					if !parser.hasProperty(filter, enforced) {
-						return fmt.Errorf("filter %s of type %s is missing required property: %s", filter.Name, filter.Type, enforced)
-					}
-				}
+		filterType, exists := filterTypeMap[filter.Type]
+		if !exists {
+			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
+		}
 
-				// Check for invalid properties
-				allowedProps := append(filterType.Configs.Enforces, "id", "name", "host", "type", "mappings", "artifact")
-				for opt := range filterType.Configs.Optional {
-					allowedProps = append(allowedProps, opt)
-				}
-
-				for prop := range filter.AdditionalProps {
-					if !parser.isAllowedProperty(prop, allowedProps) {
-						return fmt.Errorf("filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
-					}
-				}
+		filterValue := reflect.ValueOf(filter)
+		for _, enforced := range filterType.Configs.Enforces {
+			if !filterValue.FieldByName(enforced).IsValid() {
+				return fmt.Errorf("filter %s of type %s is missing required property: %s", filter.Name, filter.Type, enforced)
 			}
 		}
 	}
@@ -157,36 +154,37 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 	return nil
 }
 
-// checkFilterTypes checks if filter types are valid
-func (parser *ModelParser) checkFilterTypes(model *models.Model) error {
-	validTypes := make(map[string]bool)
-	for _, ft := range model.FilterTypes {
-		validTypes[ft.Name] = true
+// applyFilterTypeArtifacts applies artifacts and mappings from filter types if not set in the filter
+func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combinedTypes *models.CombinedTypes) error {
+	filterTypeMap := make(map[string]models.FilterType)
+	for _, ft := range combinedTypes.FilterTypes {
+		filterTypeMap[ft.Name] = ft
 	}
 
-	for _, filter := range model.Filters {
-		if !validTypes[filter.Type] {
-			return fmt.Errorf("filter %s has an invalid type: %s", filter.Name, filter.Type)
+	for i, filter := range model.Filters {
+		if filter.Type == "Custom" && filter.Artifact != "" {
+			log.Printf("Custom filter %s is using artifact %s\n", filter.Name, filter.Artifact)
+			continue
 		}
+
+		filterType, exists := filterTypeMap[filter.Type]
+		if !exists {
+			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
+		}
+
+		if filter.Artifact == "" && filterType.Artifact != "" {
+			filter.Artifact = filterType.Artifact
+			log.Printf("Filter %s of type %s is using artifact %s from filter type\n", filter.Name, filter.Type, filterType.Artifact)
+		}
+
+		if filter.Artifact != "" {
+			log.Printf("Filter %s is using artifact %s\n", filter.Name, filter.Artifact)
+		}
+
+		model.Filters[i] = filter
 	}
 
 	return nil
-}
-
-// hasProperty checks if a filter has a specified property
-func (parser *ModelParser) hasProperty(filter models.Filter, property string) bool {
-	_, exists := filter.AdditionalProps[property]
-	return exists
-}
-
-// isAllowedProperty checks if a property is allowed
-func (parser *ModelParser) isAllowedProperty(property string, allowedProps []string) bool {
-	for _, p := range allowedProps {
-		if p == property {
-			return true
-		}
-	}
-	return false
 }
 
 // performChecks performs various correctness checks on the parsed model
@@ -211,12 +209,6 @@ func (parser *ModelParser) performChecks(model *models.Model) error {
 
 	// Check if the host field of each filter refers to a defined name of a filterHost
 	err = parser.checkFilterHosts(model)
-	if err != nil {
-		return err
-	}
-
-	// Check filter mappings against deployment artifacts
-	err = parser.checkFilterMappings(model)
 	if err != nil {
 		return err
 	}
@@ -308,55 +300,61 @@ func (parser *ModelParser) checkFilterHosts(model *models.Model) error {
 }
 
 // checkFilterMappings checks if filter mappings are correct based on deployment artifacts
-func (parser *ModelParser) checkFilterMappings(model *models.Model) error {
+func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedTypes *models.CombinedTypes) error {
 	definedPipes := make(map[string]bool)
 	for _, queue := range model.Pipes.Queues {
 		definedPipes[queue.Name] = true
 	}
 
+	artifactMap := make(map[string]models.DeploymentArtifact)
+	for _, artifact := range combinedTypes.DeploymentArtifacts {
+		artifactMap[artifact.Name] = artifact
+	}
+	for _, artifact := range model.DeploymentArtifacts {
+		artifactMap[artifact.Name] = artifact
+	}
+
+	log.Printf("ArtifactMap: %+v\n", artifactMap)
+
 	for _, filter := range model.Filters {
+		artifact, exists := artifactMap[filter.Artifact]
+		if !exists {
+			return fmt.Errorf("artifact %s not found for filter %s", filter.Artifact, filter.Name)
+		}
+
 		for _, mapping := range filter.Mappings {
 			parts := strings.Split(mapping, ":")
 			if len(parts) != 2 {
 				return fmt.Errorf("invalid mapping format: %s", mapping)
 			}
 			internalPipeFound := false
-			for _, artifact := range model.DeploymentArtifacts {
-				for _, internalPipe := range artifact.InternalPipes {
-					if parts[0] == internalPipe {
-						internalPipeFound = true
-						break
-					}
-				}
-				if internalPipeFound {
+			for _, internalPipe := range artifact.InternalPipes {
+				if parts[0] == internalPipe {
+					internalPipeFound = true
 					break
 				}
 			}
 			if !internalPipeFound {
-				return fmt.Errorf("mapping internal pipe %s not defined in any deployment artifact", parts[0])
+				return fmt.Errorf("mapping internal pipe %s not defined in deployment artifact %s", parts[0], artifact.Name)
 			}
 			if !definedPipes[parts[1]] {
 				return fmt.Errorf("mapping target pipe %s not defined in queues", parts[1])
 			}
 		}
-	}
 
-	// Ensure all internal pipes are covered in the mappings
-	for _, artifact := range model.DeploymentArtifacts {
+		// Ensure all internal pipes are covered in the mappings
 		internalPipesSet := make(map[string]bool)
 		for _, internalPipe := range artifact.InternalPipes {
 			internalPipesSet[internalPipe] = true
 		}
-		for _, filter := range model.Filters {
-			mappedPipes := make(map[string]bool)
-			for _, mapping := range filter.Mappings {
-				parts := strings.Split(mapping, ":")
-				mappedPipes[parts[0]] = true
-			}
-			for internalPipe := range internalPipesSet {
-				if !mappedPipes[internalPipe] {
-					return fmt.Errorf("internal pipe %s is missing in filter mappings for deployment artifact %s", internalPipe, artifact.Name)
-				}
+		mappedPipes := make(map[string]bool)
+		for _, mapping := range filter.Mappings {
+			parts := strings.Split(mapping, ":")
+			mappedPipes[parts[0]] = true
+		}
+		for internalPipe := range internalPipesSet {
+			if !mappedPipes[internalPipe] {
+				return fmt.Errorf("internal pipe %s is missing in filter mappings for deployment artifact %s", internalPipe, artifact.Name)
 			}
 		}
 	}
