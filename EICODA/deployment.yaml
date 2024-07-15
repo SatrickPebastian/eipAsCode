@@ -18,9 +18,9 @@ hosts:
     - id: b8156cf9-cdb9-41ae-a13f-543fd75f5b70
       name: "myRabbitOnK8s"
       type: "RabbitMQ"
-      username: patrick
-      password: admin
-      connectionString: "http://localhost:5672"
+      username: admin
+      password: password
+      connectionString: "http://localhost:15672"
   filterHosts:
     - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf22
       name: "myKubernetes"

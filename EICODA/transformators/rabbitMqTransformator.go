@@ -20,8 +20,8 @@ func (t *RabbitMqTransformator) Transform(model *models.Model) error {
 terraform {
   required_providers {
     rabbitmq = {
-      source = "0UserName/rabbitmq"
-      version = "1.9.1"
+      source = "cyrilgdn/rabbitmq"
+      version = "1.8.0"
     }
   }
 }
@@ -82,7 +82,6 @@ provider "rabbitmq" {
 
 	// Apply the Terraform configuration
 	applyCmd := exec.Command("terraform", "apply", "-auto-approve")
-	applyCmd.Env = append(os.Environ(), "TF_INSECURE_SKIP_PROVIDER_VERIFY=1")
 	applyOutput, err := applyCmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply Terraform configuration: %w, output: %s", err, string(applyOutput))

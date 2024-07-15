@@ -2,16 +2,16 @@
 terraform {
   required_providers {
     rabbitmq = {
-      source = "0UserName/rabbitmq"
-      version = "1.9.1"
+      source = "cyrilgdn/rabbitmq"
+      version = "1.8.0"
     }
   }
 }
 
 provider "rabbitmq" {
-  endpoint  = "http://localhost:5672"
-  username  = "patrick"
-  password  = "admin"
+  endpoint  = "http://localhost:15672"
+  username  = "admin"
+  password  = "password"
 }
 
 resource "rabbitmq_queue" "myPipe" {
