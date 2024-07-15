@@ -1,3 +1,6 @@
 .terraform
 terraform.tfstate.backup
 terraform.tfstate
+rabbitMqModel.tf
+docker-compose.yaml
+kubernetesModel.yaml
