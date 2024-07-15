@@ -15,6 +15,6 @@ spec:
       containers:
       - env:
         - name: outputPipe
-          value: amqp://admin:password@localhost:5672
+          value: amqp://admin:password@rabbitmq:5672
         image: pstopper/eicoda-amqp-sender:latest
         name: testsender

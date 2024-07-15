@@ -28,7 +28,7 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 	}
 
 	// Generate the file at the project root
-	outputPath := filepath.Join(".", "kubernetesModel.yaml")
+	outputPath := filepath.Join("kubernetesModel.yaml")
 	file, err := os.Create(outputPath)
 	if err != nil {
 		return fmt.Errorf("failed to create Kubernetes model file: %w", err)
@@ -68,7 +68,7 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 						pipe.Protocol,
 						pipeHost.AdditionalProps["username"],
 						pipeHost.AdditionalProps["password"],
-						pipeHost.AdditionalProps["host_address"],
+						strings.ToLower(pipeHost.Type), // using the lowercase type name of the pipeHost
 						pipeHost.AdditionalProps["messaging_port"],
 					)
 					envVars = append(envVars, map[string]string{
