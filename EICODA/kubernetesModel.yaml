@@ -1,36 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: costrouter
+  name: testsender
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: costrouter
+      app: testsender
   template:
     metadata:
       labels:
-        app: costrouter
+        app: testsender
     spec:
       containers:
       - env:
-        - name: lowCostQueue
+        - name: outputPipe
           value: myPipe
-        - name: highCostQueue
-          value: myCoolMqttPipe
-        - name: inputQueue
-          value: productionPipe
-        image: pstopper/coolRouter
-        name: costrouter
+        image: pstopper/eicoda-amqp-sender:latest
+        name: testsender
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: costrouter
+  name: testsender
 spec:
   ports:
   - port: 80
     protocol: TCP
     targetPort: 8080
   selector:
-    app: costrouter
+    app: testsender

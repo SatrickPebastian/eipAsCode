@@ -2,9 +2,9 @@ const amqp = require('amqplib/callback_api');
 const process = require('process');
 
 // Load environment variables
-const interval = parseInt(process.env.INTERVAL, 10) || 5000;
-const queueAddress = process.env.QUEUE_ADDRESS || 'amqp://guest:guest@localhost:5672';
-const message = process.env.MESSAGE || 'Hello, World!';
+const interval = parseInt(process.env.interval, 10) || 5000;
+const queueAddress = process.env.outputPipe || 'amqp://guest:guest@localhost:5672';
+const message = process.env.message || 'Hello, World!';
 
 // Connect to the RabbitMQ server
 amqp.connect(queueAddress, function(error0, connection) {

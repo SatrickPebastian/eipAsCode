@@ -24,14 +24,14 @@ func NewModelParser() *ModelParser {
 // Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	data, err := ioutil.ReadFile(path)
-	if (err != nil) {
+	if err != nil {
 		log.Printf("Error reading file: %v\n", err)
 		return nil, err
 	}
 
 	var model models.Model
 	err = yaml.Unmarshal(data, &model)
-	if (err != nil) {
+	if err != nil {
 		log.Printf("Error unmarshalling YAML: %v\n", err)
 		return nil, err
 	}
@@ -43,19 +43,19 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 
 	if _, err := os.Stat(mergedTypesFilePath); err == nil {
 		typesData, err = ioutil.ReadFile(mergedTypesFilePath)
-		if (err != nil) {
+		if err != nil {
 			return nil, fmt.Errorf("failed to read mergedTypes.yaml: %w", err)
 		}
 	} else {
 		typesData, err = ioutil.ReadFile(typesFilePath)
-		if (err != nil) {
+		if err != nil {
 			return nil, fmt.Errorf("failed to read types.yaml: %w", err)
 		}
 	}
 
 	var combinedTypes models.CombinedTypes
 	err = yaml.Unmarshal(typesData, &combinedTypes)
-	if (err != nil) {
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse types file: %w", err)
 	}
 
@@ -66,7 +66,7 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 
 	// Merge the parsed model with the loaded types and artifacts
 	err = parser.mergeModels(&model, &combinedTypes)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 
@@ -74,19 +74,19 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 
 	// Perform correctness checks
 	err = parser.performChecks(&model)
-	if (err != nil) {
+	if err != nil {
 		return nil, fmt.Errorf("Parsing model failed: %w", err)
 	}
 
 	// Apply artifacts and mappings from filter types if not set in the filter
 	err = parser.applyFilterTypeArtifacts(&model, &combinedTypes)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 
 	// Perform additional checks on mappings
 	err = parser.checkFilterMappings(&model, &combinedTypes)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 
@@ -193,6 +193,11 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 		if !exists {
 			log.Printf("Filter type %s not found for filter %s", filter.Type, filter.Name)
 			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
+		}
+
+		// Initialize AdditionalProps if it is nil
+		if filter.AdditionalProps == nil {
+			filter.AdditionalProps = make(map[string]string)
 		}
 
 		for _, config := range filterType.Configs {

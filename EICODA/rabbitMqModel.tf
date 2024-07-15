@@ -1,39 +1,21 @@
 
+terraform {
+  required_providers {
+    rabbitmq = {
+      source = "0UserName/rabbitmq"
+      version = "1.9.1"
+    }
+  }
+}
+
 provider "rabbitmq" {
-  endpoint  = "http://localhost:15672"
-  username  = "guest"
-  password  = "guest"
+  endpoint  = "http://localhost:5672"
+  username  = "patrick"
+  password  = "admin"
 }
 
 resource "rabbitmq_queue" "myPipe" {
   name      = "myPipe"
-  settings {
-    durable    = true
-    auto_delete = false
-  }
-}
-
-
-resource "rabbitmq_queue" "myCoolMqttPipe" {
-  name      = "myCoolMqttPipe"
-  settings {
-    durable    = true
-    auto_delete = false
-  }
-}
-
-
-resource "rabbitmq_queue" "productionPipe" {
-  name      = "productionPipe"
-  settings {
-    durable    = true
-    auto_delete = false
-  }
-}
-
-
-resource "rabbitmq_queue" "productionPipeee" {
-  name      = "productionPipeee"
   settings {
     durable    = true
     auto_delete = false

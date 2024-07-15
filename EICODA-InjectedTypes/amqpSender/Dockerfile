@@ -11,9 +11,9 @@ COPY . .
 RUN npm install
 
 # Define environment variables
-ENV INTERVAL 5000
-ENV QUEUE_ADDRESS amqp://guest:guest@localhost:5672
-ENV MESSAGE "Hello, World!"
+ENV interval 5000
+ENV outputPipe amqp://guest:guest@localhost:5672
+ENV message "Hello, World!"
 
 # Run app.js when the container launches
 CMD ["node", "app.js"]

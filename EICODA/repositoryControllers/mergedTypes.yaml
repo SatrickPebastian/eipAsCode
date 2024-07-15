@@ -1,4 +1,11 @@
 filterTypes:
+- name: amqpSender
+  artifact: amqpSenderContainer
+  configs:
+  - name: interval
+    default: 5000
+  - name: message
+    default: "Hello World!"
 - name: Router
   configs:
     - name: routingCriterias
@@ -23,6 +30,12 @@ filterTypes:
 - name: MyCoolRouter
   derivedFrom: ConfigurableRouter
 deploymentArtifacts:
+- name: amqpSenderContainer
+  image: pstopper/eicoda-amqp-sender:latest
+  type: Docker
+  protocol: amqp
+  internalPipes:
+    - outputPipe
 - name: messageFilterArtifact
   image: eicoda/message-filter:latest
   type: Docker

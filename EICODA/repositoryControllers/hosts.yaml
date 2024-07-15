@@ -1,0 +1,11 @@
+hosts:
+  pipeHosts:
+    - name: RabbitMQ
+      configs:
+        - "username"
+        - "password"
+        - "connectionString"
+
+  filterHosts:
+    - name: DockerCompose
+    - name: Kubernetes
