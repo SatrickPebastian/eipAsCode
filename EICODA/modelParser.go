@@ -45,7 +45,6 @@ func (parser *ModelParser) loadHostTypes() {
 	log.Printf("Loaded Host Types: %+v\n", parser.hostTypes)
 }
 
-
 // Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	data, err := ioutil.ReadFile(path)
@@ -79,6 +78,8 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 			return nil, fmt.Errorf("failed to read types.yaml: %w", err)
 		}
 	}
+
+	log.Printf("Raw types.yaml/mergedTypes.yaml content: %s\n", string(typesData))
 
 	var combinedTypes models.CombinedTypes
 	err = yaml.Unmarshal(typesData, &combinedTypes)
@@ -249,7 +250,7 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 					break
 				}
 			}
-			if (!allowed) {
+			if !allowed {
 				log.Printf("Filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
 				return fmt.Errorf("filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
 			}
@@ -468,7 +469,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 				}
 			}
 
-			if (!protocolMap[pipeProtocol]) {
+			if !protocolMap[pipeProtocol] {
 				return fmt.Errorf("protocol %s of pipe %s is not allowed by deployment artifact %s", pipeProtocol, pipeName, artifact.Name)
 			}
 		}
@@ -484,7 +485,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			mappedPipes[parts[0]] = true
 		}
 		for internalPipe := range internalPipesSet {
-			if (!mappedPipes[internalPipe]) {
+			if !mappedPipes[internalPipe] {
 				return fmt.Errorf("internal pipe %s is missing in filter mappings for deployment artifact %s", internalPipe, artifact.Name)
 			}
 		}
@@ -502,6 +503,15 @@ func (parser *ModelParser) checkHostTypes(model *models.Model) error {
 			log.Printf("Checking host type: %s against %s\n", host.Type, ht.Name)
 			if host.Type == ht.Name {
 				valid = true
+
+				// Check for additional properties not defined in the host type configs
+				for prop := range host.AdditionalProps {
+					if !contains(ht.Configs, prop) {
+						return fmt.Errorf("pipeHost %s of type %s has invalid property: %s", host.Name, host.Type, prop)
+					}
+				}
+
+				// Check for missing required properties
 				for _, config := range ht.Configs {
 					if _, exists := host.AdditionalProps[config]; !exists {
 						return fmt.Errorf("pipeHost %s of type %s is missing required property: %s", host.Name, host.Type, config)
@@ -522,6 +532,15 @@ func (parser *ModelParser) checkHostTypes(model *models.Model) error {
 			log.Printf("Checking host type: %s against %s\n", host.Type, ht.Name)
 			if host.Type == ht.Name {
 				valid = true
+
+				// Check for additional properties not defined in the host type configs
+				for prop := range host.AdditionalProps {
+					if !contains(ht.Configs, prop) {
+						return fmt.Errorf("filterHost %s of type %s has invalid property: %s", host.Name, host.Type, prop)
+					}
+				}
+
+				// Check for missing required properties
 				for _, config := range ht.Configs {
 					if _, exists := host.AdditionalProps[config]; !exists {
 						return fmt.Errorf("filterHost %s of type %s is missing required property: %s", host.Name, host.Type, config)
@@ -536,4 +555,14 @@ func (parser *ModelParser) checkHostTypes(model *models.Model) error {
 	}
 
 	return nil
+}
+
+// contains checks if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, a := range slice {
+		if a == item {
+			return true
+		}
+	}
+	return false
 }
