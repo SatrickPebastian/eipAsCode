@@ -37,9 +37,9 @@ provider "rabbitmq" {
 	var endpoint, username, password string
 	for _, host := range model.Hosts.PipeHosts {
 		if host.Type == "RabbitMQ" {
-			endpoint = host.ConnectionString
-			username = host.Username
-			password = host.Password
+			endpoint = host.AdditionalProps["connectionString"]
+			username = host.AdditionalProps["username"]
+			password = host.AdditionalProps["password"]
 			break
 		}
 	}

@@ -14,12 +14,37 @@ import (
 
 // ModelParser handles parsing of deployment configuration files
 type ModelParser struct {
+	hostTypes models.HostTypes
 }
 
 // NewModelParser creates a new instance of ModelParser
 func NewModelParser() *ModelParser {
-	return &ModelParser{}
+	parser := &ModelParser{}
+	parser.loadHostTypes()
+	return parser
 }
+
+// loadHostTypes loads the host types from the hostTypes.yaml file
+func (parser *ModelParser) loadHostTypes() {
+	data, err := ioutil.ReadFile(filepath.Join("repositoryControllers", "hostTypes.yaml"))
+	if err != nil {
+		log.Fatalf("Error reading host types file: %v", err)
+	}
+
+	log.Printf("Raw hostTypes.yaml content: %s\n", string(data))
+
+	var rawHostTypes struct {
+		Hosts models.HostTypes `yaml:"hosts"`
+	}
+	err = yaml.Unmarshal(data, &rawHostTypes)
+	if err != nil {
+		log.Fatalf("Error unmarshalling host types: %v", err)
+	}
+
+	parser.hostTypes = rawHostTypes.Hosts
+	log.Printf("Loaded Host Types: %+v\n", parser.hostTypes)
+}
+
 
 // Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
@@ -35,6 +60,8 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		log.Printf("Error unmarshalling YAML: %v\n", err)
 		return nil, err
 	}
+
+	log.Printf("Parsed Model: %+v\n", model)
 
 	// Load types.yaml or mergedTypes.yaml
 	typesFilePath := filepath.Join("repositoryControllers", "types.yaml")
@@ -222,7 +249,7 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 					break
 				}
 			}
-			if !allowed {
+			if (!allowed) {
 				log.Printf("Filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
 				return fmt.Errorf("filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
 			}
@@ -441,7 +468,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 				}
 			}
 
-			if !protocolMap[pipeProtocol] {
+			if (!protocolMap[pipeProtocol]) {
 				return fmt.Errorf("protocol %s of pipe %s is not allowed by deployment artifact %s", pipeProtocol, pipeName, artifact.Name)
 			}
 		}
@@ -457,7 +484,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			mappedPipes[parts[0]] = true
 		}
 		for internalPipe := range internalPipesSet {
-			if !mappedPipes[internalPipe] {
+			if (!mappedPipes[internalPipe]) {
 				return fmt.Errorf("internal pipe %s is missing in filter mappings for deployment artifact %s", internalPipe, artifact.Name)
 			}
 		}
@@ -468,15 +495,43 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 
 // checkHostTypes checks if pipeHosts have type RabbitMQ and filterHosts have type Kubernetes or DockerCompose
 func (parser *ModelParser) checkHostTypes(model *models.Model) error {
+	log.Printf("Validating pipeHosts: %+v\n", model.Hosts.PipeHosts)
 	for _, host := range model.Hosts.PipeHosts {
-		if host.Type != "RabbitMQ" {
-			return fmt.Errorf("pipeHost %s has invalid type %s, expected RabbitMQ", host.Name, host.Type)
+		valid := false
+		for _, ht := range parser.hostTypes.PipeHosts {
+			log.Printf("Checking host type: %s against %s\n", host.Type, ht.Name)
+			if host.Type == ht.Name {
+				valid = true
+				for _, config := range ht.Configs {
+					if _, exists := host.AdditionalProps[config]; !exists {
+						return fmt.Errorf("pipeHost %s of type %s is missing required property: %s", host.Name, host.Type, config)
+					}
+				}
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("pipeHost %s has invalid type %s", host.Name, host.Type)
 		}
 	}
 
+	log.Printf("Validating filterHosts: %+v\n", model.Hosts.FilterHosts)
 	for _, host := range model.Hosts.FilterHosts {
-		if host.Type != "Kubernetes" && host.Type != "DockerCompose" {
-			return fmt.Errorf("filterHost %s has invalid type %s, expected Kubernetes or DockerCompose", host.Name, host.Type)
+		valid := false
+		for _, ht := range parser.hostTypes.FilterHosts {
+			log.Printf("Checking host type: %s against %s\n", host.Type, ht.Name)
+			if host.Type == ht.Name {
+				valid = true
+				for _, config := range ht.Configs {
+					if _, exists := host.AdditionalProps[config]; !exists {
+						return fmt.Errorf("filterHost %s of type %s is missing required property: %s", host.Name, host.Type, config)
+					}
+				}
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("filterHost %s has invalid type %s", host.Name, host.Type)
 		}
 	}
 

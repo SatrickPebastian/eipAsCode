@@ -1,0 +1,18 @@
+hosts:
+  pipeHosts:
+    - name: RabbitMQ
+      configs:
+        - "username"
+        - "password"
+        - "host_address"
+        - "amqp_port"
+        - "management_port"
+    - name: Mosquitto
+      configs:
+        - "username"
+        - "password"
+        - "host_address"
+
+  filterHosts:
+    - name: DockerCompose
+    - name: Kubernetes

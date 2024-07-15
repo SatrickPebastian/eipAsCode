@@ -20,7 +20,17 @@ hosts:
       type: "RabbitMQ"
       username: admin
       password: password
-      connectionString: "http://localhost:15672"
+      amqp_port: 5672
+      management_port: 15672
+      host_address: localhost
+      blabla: "asdasd"
+    - id: b8156cf9-cdb9-41ae-a13f-575f5b70
+      name: "myMosquitto"
+      type: "Mosquitto"
+      username: admin
+      password: password
+      host_address: localhost
+    
   filterHosts:
     - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf22
       name: "myKubernetes"

@@ -34,13 +34,10 @@ type Hosts struct {
 }
 
 type Host struct {
-    ID              string `yaml:"id"`
-    Name            string `yaml:"name"`
-    Type            string `yaml:"type"`
-    Configs         string `yaml:"configs"`
-    ConnectionString string `yaml:"connectionString"` // Add this field
-    Username        string `yaml:"username"`         // Add this field
-    Password        string `yaml:"password"`         // Add this field
+    ID              string            `yaml:"id"`
+    Name            string            `yaml:"name"`
+    Type            string            `yaml:"type"`
+    AdditionalProps map[string]string `yaml:",inline"`
 }
 
 type FilterType struct {
@@ -66,4 +63,14 @@ type DeploymentArtifact struct {
 type CombinedTypes struct {
     FilterTypes        []FilterType        `yaml:"filterTypes"`
     DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
+}
+
+type HostTypes struct {
+    PipeHosts   []HostType `yaml:"pipeHosts"`
+    FilterHosts []HostType `yaml:"filterHosts"`
+}
+
+type HostType struct {
+    Name    string   `yaml:"name"`
+    Configs []string `yaml:"configs"`
 }
