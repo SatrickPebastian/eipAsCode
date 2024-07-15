@@ -12,6 +12,12 @@ filters:
     type: "amqpSender"
     mappings:
       - "outputPipe:myPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f83
+    name: "testSenderr"
+    host: "myDocker"
+    type: "amqpSender"
+    mappings:
+      - "outputPipe:myPipe"
       
 hosts:
   pipeHosts:
@@ -28,3 +34,6 @@ hosts:
     - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf22
       name: "myKubernetes"
       type: "Kubernetes"
+    - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf
+      name: "myDocker"
+      type: "DockerCompose"

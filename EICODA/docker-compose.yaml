@@ -1,13 +1,6 @@
 services:
-  costrouterdc:
+  testsenderr:
     environment:
-    - lowCostQueue=myPipe
-    - highCostQueue=myCoolMqttPipe
-    - inputQueue=productionPipe
-    image: pstopper/coolRouter
-  myrouterrouter:
-    environment:
-    - inputPipes=myPipe
-    - outputPipes=myPipe
-    image: eicoda/configurable-router:latest
+    - outputPipe=amqp://admin:password@localhost:5672
+    image: pstopper/eicoda-amqp-sender:latest
 version: "3"
