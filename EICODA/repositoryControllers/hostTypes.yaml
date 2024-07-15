@@ -5,13 +5,8 @@ hosts:
         - "username"
         - "password"
         - "host_address"
-        - "amqp_port"
+        - "messaging_port"
         - "management_port"
-    - name: Mosquitto
-      configs:
-        - "username"
-        - "password"
-        - "host_address"
 
   filterHosts:
     - name: DockerCompose

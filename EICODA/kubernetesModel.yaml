@@ -15,18 +15,6 @@ spec:
       containers:
       - env:
         - name: outputPipe
-          value: myPipe
+          value: amqp://admin:password@localhost:5672
         image: pstopper/eicoda-amqp-sender:latest
         name: testsender
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: testsender
-spec:
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: testsender

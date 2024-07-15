@@ -20,14 +20,8 @@ hosts:
       type: "RabbitMQ"
       username: admin
       password: password
-      amqp_port: 5672
+      messaging_port: 5672
       management_port: 15672
-      host_address: localhost
-    - id: b8156cf9-cdb9-41ae-a13f-575f5b70
-      name: "myMosquitto"
-      type: "Mosquitto"
-      username: admin
-      password: password
       host_address: localhost
     
   filterHosts:

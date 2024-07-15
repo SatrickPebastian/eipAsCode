@@ -22,8 +22,8 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "Kubernetes" {
 			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
-			deployment, service := createKubernetesResources(filter, image)
-			resources = append(resources, deployment, service)
+			deployment := createKubernetesDeployment(model, filter, image)
+			resources = append(resources, deployment)
 		}
 	}
 
@@ -53,16 +53,30 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 	return nil
 }
 
-func createKubernetesResources(filter models.Filter, image string) (map[string]interface{}, map[string]interface{}) {
+func createKubernetesDeployment(model *models.Model, filter models.Filter, image string) map[string]interface{} {
 	name := utils.SanitizeName(filter.Name)
 	envVars := []map[string]string{}
 	for _, mapping := range filter.Mappings {
 		parts := strings.Split(mapping, ":")
 		if len(parts) == 2 {
-			envVars = append(envVars, map[string]string{
-				"name":  parts[0],
-				"value": parts[1],
-			})
+			pipeName := parts[1]
+			pipe := utils.FindQueueByName(model.Pipes.Queues, pipeName)
+			if pipe != nil {
+				pipeHost := utils.FindHostByName(model.Hosts.PipeHosts, pipe.Host)
+				if pipeHost != nil {
+					value := fmt.Sprintf("%s://%s:%s@%s:%s",
+						pipe.Protocol,
+						pipeHost.AdditionalProps["username"],
+						pipeHost.AdditionalProps["password"],
+						pipeHost.AdditionalProps["host_address"],
+						pipeHost.AdditionalProps["messaging_port"],
+					)
+					envVars = append(envVars, map[string]string{
+						"name":  parts[0],
+						"value": value,
+					})
+				}
+			}
 		}
 	}
 
@@ -98,25 +112,5 @@ func createKubernetesResources(filter models.Filter, image string) (map[string]i
 		},
 	}
 
-	service := map[string]interface{}{
-		"apiVersion": "v1",
-		"kind":       "Service",
-		"metadata": map[string]interface{}{
-			"name": name,
-		},
-		"spec": map[string]interface{}{
-			"selector": map[string]interface{}{
-				"app": name,
-			},
-			"ports": []map[string]interface{}{
-				{
-					"protocol":   "TCP",
-					"port":       80,
-					"targetPort": 8080,
-				},
-			},
-		},
-	}
-
-	return deployment, service
+	return deployment
 }

@@ -34,3 +34,13 @@ func FindArtifactImage(artifacts []models.DeploymentArtifact, artifactName strin
 	}
 	return ""
 }
+
+// FindQueueByName finds a queue by its name
+func FindQueueByName(queues []models.Queue, name string) *models.Queue {
+	for _, queue := range queues {
+		if queue.Name == name {
+			return &queue
+		}
+	}
+	return nil
+}
