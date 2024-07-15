@@ -51,13 +51,21 @@ provider "rabbitmq" {
 	for _, pipe := range model.Pipes.Queues {
 		host := utils.FindHostByName(model.Hosts.PipeHosts, pipe.Host)
 		if host != nil && host.Type == "RabbitMQ" {
-			resource := createRabbitMqResource(pipe, host)
+			resource := createRabbitMqQueueResource(pipe, host)
+			terraformResources += resource + "\n"
+		}
+	}
+
+	for _, topic := range model.Pipes.Topics {
+		host := utils.FindHostByName(model.Hosts.PipeHosts, topic.Host)
+		if host != nil && host.Type == "RabbitMQ" {
+			resource := createRabbitMqTopicResource(topic, host)
 			terraformResources += resource + "\n"
 		}
 	}
 
 	// Generate the file at the project root
-	outputPath := filepath.Join(".", "rabbitMqModel.tf")
+	outputPath := filepath.Join("rabbitMqModel.tf")
 	file, err := os.Create(outputPath)
 	if err != nil {
 		return fmt.Errorf("failed to create RabbitMQ model file: %w", err)
@@ -93,17 +101,35 @@ provider "rabbitmq" {
 	return nil
 }
 
-func createRabbitMqResource(pipe models.Queue, host *models.Host) string {
+func createRabbitMqQueueResource(pipe models.Queue, host *models.Host) string {
 	resourceName := strings.ReplaceAll(pipe.Name, "-", "_")
 	resource := fmt.Sprintf(`
 resource "rabbitmq_queue" "%s" {
   name      = "%s"
+  vhost     = "/"
   settings {
     durable    = true
     auto_delete = false
   }
 }
 `, resourceName, pipe.Name)
+
+	return resource
+}
+
+func createRabbitMqTopicResource(topic models.Topic, host *models.Host) string {
+	resourceName := strings.ReplaceAll(topic.Name, "-", "_")
+	resource := fmt.Sprintf(`
+resource "rabbitmq_exchange" "%s" {
+  name  = "%s"
+  vhost = "/"
+  settings {
+    type        = "topic"
+    durable     = true
+    auto_delete = false
+  }
+}
+`, resourceName, topic.Name)
 
 	return resource
 }

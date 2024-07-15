@@ -3,6 +3,7 @@ package models
 type Model struct {
     Pipes struct {
         Queues []Queue `yaml:"queues"`
+        Topics []Topic `yaml:"topics"`
     } `yaml:"pipes"`
     Filters            []Filter            `yaml:"filters"`
     Hosts              Hosts               `yaml:"hosts"`
@@ -16,6 +17,13 @@ type Queue struct {
     Host     string `yaml:"host"`
     Protocol string `yaml:"protocol"`
     Configs  string `yaml:"configs"`
+}
+
+type Topic struct {
+    ID       string `yaml:"id"`
+    Name     string `yaml:"name"`
+    Host     string `yaml:"host"`
+    Protocol string `yaml:"protocol"`
 }
 
 type Filter struct {

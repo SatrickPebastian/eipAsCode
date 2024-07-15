@@ -16,8 +16,20 @@ provider "rabbitmq" {
 
 resource "rabbitmq_queue" "myPipe" {
   name      = "myPipe"
+  vhost     = "/"
   settings {
     durable    = true
+    auto_delete = false
+  }
+}
+
+
+resource "rabbitmq_exchange" "myPipe" {
+  name  = "myPipe"
+  vhost = "/"
+  settings {
+    type        = "topic"
+    durable     = true
     auto_delete = false
   }
 }

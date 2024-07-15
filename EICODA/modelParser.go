@@ -345,6 +345,13 @@ func (parser *ModelParser) checkForDuplicateIDs(model *models.Model) error {
 		idSet[queue.ID] = true
 	}
 
+	for _, topic := range model.Pipes.Topics { // Add this block to check for duplicate topic IDs
+		if idSet[topic.ID] {
+			return fmt.Errorf("duplicate ID found: %s", topic.ID)
+		}
+		idSet[topic.ID] = true
+	}
+
 	for _, filter := range model.Filters {
 		if idSet[filter.ID] {
 			return fmt.Errorf("duplicate ID found: %s", filter.ID)
@@ -382,6 +389,12 @@ func (parser *ModelParser) checkQueueHosts(model *models.Model) error {
 		}
 	}
 
+	for _, topic := range model.Pipes.Topics { // Add this block to check if the host field of each topic refers to a defined name of a pipeHost
+		if !pipeHosts[topic.Host] {
+			return fmt.Errorf("topic host %s is not defined as a pipeHost", topic.Host)
+		}
+	}
+
 	return nil
 }
 
@@ -390,6 +403,11 @@ func (parser *ModelParser) checkQueueProtocols(model *models.Model) error {
 	for _, queue := range model.Pipes.Queues {
 		if queue.Protocol != "amqp" && queue.Protocol != "mqtt" {
 			return fmt.Errorf("queue protocol %s is invalid for queue %s", queue.Protocol, queue.Name)
+		}
+	}
+	for _, topic := range model.Pipes.Topics { // Add this block to check if the protocol is either amqp or mqtt for topics
+		if topic.Protocol != "amqp" && topic.Protocol != "mqtt" {
+			return fmt.Errorf("topic protocol %s is invalid for topic %s", topic.Protocol, topic.Name)
 		}
 	}
 	return nil
@@ -416,6 +434,9 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 	definedPipes := make(map[string]bool)
 	for _, queue := range model.Pipes.Queues {
 		definedPipes[queue.Name] = true
+	}
+	for _, topic := range model.Pipes.Topics { // Add this block to include topics in the defined pipes
+		definedPipes[topic.Name] = true
 	}
 
 	artifactMap := make(map[string]models.DeploymentArtifact)
@@ -458,13 +479,19 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 
 			pipeName := parts[1]
 			if !definedPipes[pipeName] {
-				return fmt.Errorf("mapping target pipe %s not defined in queues", pipeName)
+				return fmt.Errorf("mapping target pipe %s not defined in queues or topics", pipeName)
 			}
 
 			var pipeProtocol string
 			for _, queue := range model.Pipes.Queues {
 				if queue.Name == pipeName {
 					pipeProtocol = queue.Protocol
+					break
+				}
+			}
+			for _, topic := range model.Pipes.Topics { // Add this block to get the protocol for topics
+				if topic.Name == pipeName {
+					pipeProtocol = topic.Protocol
 					break
 				}
 			}

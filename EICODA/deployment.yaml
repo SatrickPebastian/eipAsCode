@@ -4,6 +4,11 @@ pipes:
       name: "myPipe"
       host: "myRabbitOnK8s"
       protocol: "amqp"
+  topics:
+    - id: 3b76043e-676b-4029-9008-b0cec8e1d
+      name: "myPipe"
+      host: "myRabbitOnK8s"
+      protocol: "amqp"
 
 filters:
   - id: 577a26d2-216c-4e6e-95e0-e7808f8394
