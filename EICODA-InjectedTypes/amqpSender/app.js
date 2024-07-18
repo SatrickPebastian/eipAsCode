@@ -3,7 +3,7 @@ const process = require('process');
 
 // Load environment variables
 const interval = parseInt(process.env.interval, 10) || 5000;
-const queueAddress = process.env.outputPipe || 'amqp://guest:guest@localhost:5672';
+const [queueAddress, queue] = process.env.outputPipe.split(',');
 const message = process.env.message || 'Hello, World!';
 
 // Connect to the RabbitMQ server
@@ -16,8 +16,6 @@ amqp.connect(queueAddress, function(error0, connection) {
     if (error1) {
       throw error1;
     }
-
-    const queue = 'output';
 
     channel.assertQueue(queue, {
       durable: true

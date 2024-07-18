@@ -62,16 +62,29 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 			if pipe != nil {
 				pipeHost := utils.FindHostByName(model.Hosts.PipeHosts, pipe.Host)
 				if pipeHost != nil {
-					value := fmt.Sprintf("%s://%s:%s@%s:%s",
+					value := fmt.Sprintf("%s://%s:%s@%s:%s,%s",
 						pipe.Protocol,
 						pipeHost.AdditionalProps["username"],
 						pipeHost.AdditionalProps["password"],
 						pipeHost.AdditionalProps["host_address"],
 						pipeHost.AdditionalProps["messaging_port"],
+						pipe.Name, // add the pipe name at the end
 					)
 					envVars = append(envVars, fmt.Sprintf("%s=%s", parts[0], value))
 				}
 			}
+		}
+	}
+
+	// Add environment variables for filter type configs
+	filterType := utils.FindFilterTypeByName(model.FilterTypes, filter.Type)
+	if filterType != nil {
+		for _, config := range filterType.Configs {
+			value, exists := filter.AdditionalProps[config.Name]
+			if !exists {
+				value = fmt.Sprintf("%v", config.Default)
+			}
+			envVars = append(envVars, fmt.Sprintf("%s=%s", config.Name, utils.ConvertToProperType(value)))
 		}
 	}
 

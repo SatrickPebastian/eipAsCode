@@ -15,14 +15,15 @@ filters:
     name: "testSender"
     host: "myKubernetes"
     type: "amqpSender"
+    message: "Blablabla"
     mappings:
       - "outputPipe:myPipe"
   - id: 577a26d2-216c-4e6e-95e0-e7808f83
-    name: "testSenderr"
+    name: "testReceiver"
     host: "myDocker"
-    type: "amqpSender"
+    type: "amqpReceiver"
     mappings:
-      - "outputPipe:myPipe"
+      - "inputPipe:myPipe"
       
 hosts:
   pipeHosts:

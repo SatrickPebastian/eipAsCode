@@ -2,7 +2,10 @@ const amqp = require('amqplib/callback_api');
 const process = require('process');
 
 // Load environment variables
-const queueAddress = process.env.QUEUE_ADDRESS || 'amqp://guest:guest@localhost:5672';
+
+const [queueAddress, queue] = process.env.inputPipe.split(',');
+console.log("queueAddress:"+queueAddress)
+console.log("queueName:"+queue)
 
 // Connect to the RabbitMQ server
 amqp.connect(queueAddress, function(error0, connection) {
@@ -14,8 +17,6 @@ amqp.connect(queueAddress, function(error0, connection) {
     if (error1) {
       throw error1;
     }
-
-    const queue = 'output';
 
     channel.assertQueue(queue, {
       durable: true

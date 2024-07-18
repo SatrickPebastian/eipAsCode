@@ -2,6 +2,7 @@ package utils
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"eicoda/models"
 )
@@ -43,4 +44,28 @@ func FindQueueByName(queues []models.Queue, name string) *models.Queue {
 		}
 	}
 	return nil
+}
+
+// FindFilterTypeByName finds a filter type by its name
+func FindFilterTypeByName(filterTypes []models.FilterType, name string) *models.FilterType {
+	for _, filterType := range filterTypes {
+		if filterType.Name == name {
+			return &filterType
+		}
+	}
+	return nil
+}
+
+// ConvertToProperType converts string values to their appropriate type
+func ConvertToProperType(value string) string {
+	// Try to convert to int
+	if intValue, err := strconv.Atoi(value); err == nil {
+		return strconv.Itoa(intValue)
+	}
+	// Try to convert to float
+	if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
+		return strconv.FormatFloat(floatValue, 'f', -1, 64)
+	}
+	// Return as string if no other type matches
+	return value
 }

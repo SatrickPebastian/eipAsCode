@@ -6,6 +6,8 @@ filterTypes:
     default: 5000
   - name: message
     default: "Hello World!"
+- name: amqpReceiver
+  artifact: amqpReceiverContainer
 - name: Router
   configs:
     - name: routingCriterias
@@ -23,12 +25,7 @@ filterTypes:
   artifact: configurableTransformatorArtifact
   derivedFrom: Transformator
 - name: Custom
-- name: MessageFilter
-  artifact: MessageFilterArtifact
-  configs:
-    - name: filterCriteria
-- name: MyCoolRouter
-  derivedFrom: ConfigurableRouter
+
 deploymentArtifacts:
 - name: amqpSenderContainer
   image: pstopper/eicoda-amqp-sender:latest
@@ -36,13 +33,12 @@ deploymentArtifacts:
   protocol: amqp
   internalPipes:
     - outputPipe
-- name: messageFilterArtifact
-  image: eicoda/message-filter:latest
+- name: amqpReceiverContainer
+  image: pstopper/eicoda-amqp-receiver:latest
   type: Docker
-  protocol: "amqp"
+  protocol: amqp
   internalPipes:
-  - inputPipes
-  - outputPipes
+    - inputPipe
 - name: configurableRouterArtifact
   image: eicoda/configurable-router:latest
   type: Docker

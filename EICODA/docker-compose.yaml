@@ -1,6 +1,6 @@
 services:
-  testsenderr:
+  testreceiver:
     environment:
-    - outputPipe=amqp://admin:password@localhost:5672
-    image: pstopper/eicoda-amqp-sender:latest
+    - inputPipe=amqp://admin:password@localhost:5672,myPipe
+    image: pstopper/eicoda-amqp-receiver:latest
 version: "3"

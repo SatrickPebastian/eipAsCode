@@ -15,6 +15,10 @@ spec:
       containers:
       - env:
         - name: outputPipe
-          value: amqp://admin:password@rabbitmq:5672
+          value: amqp://admin:password@rabbitmq:5672,myPipe
+        - name: interval
+          value: "5000"
+        - name: message
+          value: Blablabla
         image: pstopper/eicoda-amqp-sender:latest
         name: testsender
