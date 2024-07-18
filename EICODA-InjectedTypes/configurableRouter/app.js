@@ -1,13 +1,15 @@
 const amqp = require('amqplib/callback_api');
 const fs = require('fs');
+const path = require('path');
 
 // Load environment variables
 const inputPipe = process.env.inputPipe;
 const [pipeAddressOne, pipeOne] = process.env.outputPipeOne.split(',');
 const [pipeAddressTwo, pipeTwo] = process.env.outputPipeTwo.split(',');
 
-// Load the routing logic from an external JSON file
-const routingLogic = JSON.parse(fs.readFileSync('routing_logic.json', 'utf8'));
+// Load the routing logic from the mounted volume
+const routingLogicPath = path.join('/etc/config', 'routingCriterias');
+const routingLogic = JSON.parse(fs.readFileSync(routingLogicPath, 'utf8'));
 
 // Connect to the input AMQP queue
 amqp.connect(inputPipe, function(error0, connection) {
@@ -28,27 +30,12 @@ amqp.connect(inputPipe, function(error0, connection) {
     console.log("Waiting for messages in %s. To exit press CTRL+C", queue);
 
     channel.consume(queue, function(msg) {
-      const msgContent = msg.content.toString();
-      let routingKey;
+      const message = JSON.parse(msg.content.toString());
+      const routingKey = routeMessage(message);
 
-      try {
-        const message = JSON.parse(msgContent);
-        routingKey = routeMessage(message);
-      } catch (e) {
-        console.error('Invalid CloudEvent message:', msgContent);
-        routingKey = routingLogic.defaultOutputQueue;
-      }
-
-      // Define the output queues
-      const outputQueues = [
-        { address: pipeAddressOne, queue: pipeOne },
-        { address: pipeAddressTwo, queue: pipeTwo }
-      ];
-
-      const outputQueue = outputQueues.find(q => q.queue === routingKey);
-
-      if (outputQueue) {
-        amqp.connect(outputQueue.address, function(error2, connection2) {
+      const outputQueues = [pipeAddressOne, pipeAddressTwo];
+      outputQueues.forEach(outputQueue => {
+        amqp.connect(outputQueue, function(error2, connection2) {
           if (error2) {
             throw error2;
           }
@@ -56,14 +43,14 @@ amqp.connect(inputPipe, function(error0, connection) {
             if (error3) {
               throw error3;
             }
-            channel2.assertQueue(outputQueue.queue, {
+            channel2.assertQueue(routingKey, {
               durable: true
             });
-            channel2.sendToQueue(outputQueue.queue, Buffer.from(msgContent));
-            console.log("Sent message to %s: %s", outputQueue.queue, msgContent);
+            channel2.sendToQueue(routingKey, Buffer.from(JSON.stringify(message)));
+            console.log("Sent message to %s: %s", routingKey, JSON.stringify(message));
           });
         });
-      }
+      });
 
       channel.ack(msg);
     }, {
@@ -79,5 +66,5 @@ function routeMessage(message) {
       return rule.outputPipe;
     }
   }
-  return routingLogic.defaultOutputQueue;
+  return routingLogic.defaultOutputPipe;
 }

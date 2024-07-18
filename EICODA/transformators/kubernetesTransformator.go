@@ -2,6 +2,7 @@ package transformators
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,8 +23,11 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "Kubernetes" {
 			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
-			deployment := createKubernetesDeployment(model, filter, image)
+			deployment, configMap := createKubernetesDeployment(model, filter, image)
 			resources = append(resources, deployment)
+			if configMap != nil {
+				resources = append(resources, configMap)
+			}
 		}
 	}
 
@@ -53,9 +57,12 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 	return nil
 }
 
-func createKubernetesDeployment(model *models.Model, filter models.Filter, image string) map[string]interface{} {
+func createKubernetesDeployment(model *models.Model, filter models.Filter, image string) (map[string]interface{}, map[string]interface{}) {
 	name := utils.SanitizeName(filter.Name)
-	envVars := []map[string]string{}
+	envVars := []map[string]interface{}{}
+	volumeMounts := []map[string]interface{}{}
+	volumes := []map[string]interface{}{}
+
 	for _, mapping := range filter.Mappings {
 		parts := strings.Split(mapping, ":")
 		if len(parts) == 2 {
@@ -72,7 +79,7 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 						pipeHost.AdditionalProps["messaging_port"],
 						pipe.Name, // add the pipe name at the end
 					)
-					envVars = append(envVars, map[string]string{
+					envVars = append(envVars, map[string]interface{}{
 						"name":  parts[0],
 						"value": value,
 					})
@@ -83,16 +90,52 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 
 	// Add environment variables for filter type configs
 	filterType := utils.FindFilterTypeByName(model.FilterTypes, filter.Type)
+	var configMap map[string]interface{}
 	if filterType != nil {
 		for _, config := range filterType.Configs {
 			value, exists := filter.AdditionalProps[config.Name]
 			if !exists {
 				value = fmt.Sprintf("%v", config.Default)
 			}
-			envVars = append(envVars, map[string]string{
-				"name":  config.Name,
-				"value": utils.ConvertToProperType(value),
-			})
+			if config.File {
+				// Handle file-based config
+				filePath := value
+				fileContent, err := ioutil.ReadFile(filepath.Join(".", filePath))
+				if err != nil {
+					fmt.Printf("failed to read file %s: %v", filePath, err)
+					continue
+				}
+
+				configMapName := strings.ToLower(name + "-" + config.Name)
+				configMap = map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "ConfigMap",
+					"metadata": map[string]interface{}{
+						"name": configMapName,
+					},
+					"data": map[string]interface{}{
+						config.Name: string(fileContent),
+					},
+				}
+
+				volumeMounts = append(volumeMounts, map[string]interface{}{
+					"name":      configMapName,
+					"mountPath": fmt.Sprintf("/etc/config/%s", config.Name),
+					"subPath":   config.Name,
+				})
+
+				volumes = append(volumes, map[string]interface{}{
+					"name": configMapName,
+					"configMap": map[string]interface{}{
+						"name": configMapName,
+					},
+				})
+			} else {
+				envVars = append(envVars, map[string]interface{}{
+					"name":  config.Name,
+					"value": utils.ConvertToProperType(value),
+				})
+			}
 		}
 	}
 
@@ -118,15 +161,17 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 				"spec": map[string]interface{}{
 					"containers": []map[string]interface{}{
 						{
-							"name":  name,
-							"image": image,
-							"env":   envVars,
+							"name":         name,
+							"image":        image,
+							"env":          envVars,
+							"volumeMounts": volumeMounts,
 						},
 					},
+					"volumes": volumes,
 				},
 			},
 		},
 	}
 
-	return deployment
+	return deployment, configMap
 }

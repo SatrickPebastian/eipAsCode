@@ -5,9 +5,9 @@ type Model struct {
         Queues []Queue `yaml:"queues"`
         Topics []Topic `yaml:"topics"`
     } `yaml:"pipes"`
-    Filters            []Filter            `yaml:"filters"`
-    Hosts              Hosts               `yaml:"hosts"`
-    FilterTypes        []FilterType        `yaml:"filterTypes"`
+    Filters             []Filter             `yaml:"filters"`
+    Hosts               Hosts                `yaml:"hosts"`
+    FilterTypes         []FilterType         `yaml:"filterTypes"`
     DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
 }
 
@@ -27,13 +27,13 @@ type Topic struct {
 }
 
 type Filter struct {
-    ID                string            `yaml:"id"`
-    Name              string            `yaml:"name"`
-    Host              string            `yaml:"host"`
-    Type              string            `yaml:"type"`
-    Mappings          []string          `yaml:"mappings"`
-    Artifact          string            `yaml:"artifact"`
-    AdditionalProps   map[string]string `yaml:",inline"`
+    ID               string            `yaml:"id"`
+    Name             string            `yaml:"name"`
+    Host             string            `yaml:"host"`
+    Type             string            `yaml:"type"`
+    Mappings         []string          `yaml:"mappings"`
+    Artifact         string            `yaml:"artifact"`
+    AdditionalProps  map[string]string `yaml:",inline"`
 }
 
 type Hosts struct {
@@ -49,15 +49,16 @@ type Host struct {
 }
 
 type FilterType struct {
-    Name        string             `yaml:"name"`
-    Artifact    string             `yaml:"artifact,omitempty"`
-    Configs     []FilterConfig     `yaml:"configs,omitempty"`
-    DerivedFrom string             `yaml:"derivedFrom,omitempty"`
+    Name        string        `yaml:"name"`
+    Artifact    string        `yaml:"artifact,omitempty"`
+    Configs     []FilterConfig `yaml:"configs,omitempty"`
+    DerivedFrom string        `yaml:"derivedFrom,omitempty"`
 }
 
 type FilterConfig struct {
     Name    string      `yaml:"name"`
     Default interface{} `yaml:"default,omitempty"`
+    File    bool        `yaml:"file,omitempty"` // Add this line
 }
 
 type DeploymentArtifact struct {
@@ -69,7 +70,7 @@ type DeploymentArtifact struct {
 }
 
 type CombinedTypes struct {
-    FilterTypes        []FilterType        `yaml:"filterTypes"`
+    FilterTypes         []FilterType         `yaml:"filterTypes"`
     DeploymentArtifacts []DeploymentArtifact `yaml:"deploymentArtifacts"`
 }
 

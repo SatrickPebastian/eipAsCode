@@ -24,8 +24,28 @@ resource "rabbitmq_queue" "myPipe" {
 }
 
 
-resource "rabbitmq_exchange" "myPipe" {
-  name  = "myPipe"
+resource "rabbitmq_queue" "testOutputOne" {
+  name      = "testOutputOne"
+  vhost     = "/"
+  settings {
+    durable    = true
+    auto_delete = false
+  }
+}
+
+
+resource "rabbitmq_queue" "testOutputTwo" {
+  name      = "testOutputTwo"
+  vhost     = "/"
+  settings {
+    durable    = true
+    auto_delete = false
+  }
+}
+
+
+resource "rabbitmq_exchange" "testTopic" {
+  name  = "testTopic"
   vhost = "/"
   settings {
     type        = "topic"

@@ -1,0 +1,13 @@
+{
+  "rules": [
+    {
+      "condition": "message.data.level === 'error'",
+      "outputPipe": "outputPipeOne"
+    },
+    {
+      "condition": "message.data.level === 'info'",
+      "outputPipe": "outputPipeTwo"
+    }
+  ],
+  "defaultOutputPipe": "outputPipeOne"
+}

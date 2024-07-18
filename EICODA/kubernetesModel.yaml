@@ -22,3 +22,60 @@ spec:
           value: Blablabla
         image: pstopper/eicoda-amqp-sender:latest
         name: testsender
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testrouter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testrouter
+  template:
+    metadata:
+      labels:
+        app: testrouter
+    spec:
+      containers:
+      - env:
+        - name: inputPipe
+          value: amqp://admin:password@rabbitmq:5672,myPipe
+        - name: outputPipeOne
+          value: amqp://admin:password@rabbitmq:5672,testOutputOne
+        - name: outputPipeTwo
+          value: amqp://admin:password@rabbitmq:5672,testOutputTwo
+        - name: interval
+          value: "10"
+        image: eicoda/configurable-router:latest
+        name: testrouter
+        volumeMounts:
+        - mountPath: /etc/config/routingCriterias
+          name: testrouter-routingcriterias
+          subPath: routingCriterias
+      volumes:
+      - configMap:
+          name: testrouter-routingcriterias
+        name: testrouter-routingcriterias
+---
+apiVersion: v1
+data:
+  routingCriterias: |
+    {
+      "rules": [
+        {
+          "condition": "message.data.level === 'error'",
+          "outputPipe": "outputPipeOne"
+        },
+        {
+          "condition": "message.data.level === 'info'",
+          "outputPipe": "outputPipeTwo"
+        }
+      ],
+      "defaultOutputPipe": "outputPipeOne"
+    }
+kind: ConfigMap
+metadata:
+  name: testrouter-routingcriterias

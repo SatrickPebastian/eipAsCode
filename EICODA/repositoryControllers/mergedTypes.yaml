@@ -11,6 +11,7 @@ filterTypes:
 - name: Router
   configs:
     - name: routingCriterias
+      file: true
     - name: interval
       default: 10
 - name: Transformator
@@ -44,8 +45,9 @@ deploymentArtifacts:
   type: Docker
   protocol: "amqp"
   internalPipes:
-  - inputPipes
-  - outputPipes
+  - inputPipe
+  - outputPipeOne
+  - outputPipeTwo
 - name: configurableTransformatorArtifact
   image: eicoda/configurable-transformator:latest
   type: Docker
