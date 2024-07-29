@@ -14,8 +14,8 @@ provider "rabbitmq" {
   password  = "password"
 }
 
-resource "rabbitmq_queue" "myPipe" {
-  name      = "myPipe"
+resource "rabbitmq_queue" "JOOOO" {
+  name      = "JOOOO"
   vhost     = "/"
   settings {
     durable    = true

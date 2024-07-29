@@ -1,5 +1,7 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const { execFile } = require('child_process');
+const os = require('os');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -29,4 +31,22 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+ipcMain.handle('deploy-model', async (event, modelContent) => {
+  const eicodaPath = os.platform() === 'win32' ? path.join(__dirname, '../EICODA/eicoda.exe') : path.join(__dirname, '../EICODA/eicoda');
+  const eicodaWorkingDir = path.join(__dirname, '../EICODA');
+
+  return new Promise((resolve, reject) => {
+    const child = execFile(eicodaPath, ['process', '--content', modelContent], { cwd: eicodaWorkingDir }, (error, stdout, stderr) => {
+      if (error) {
+        reject(stderr);
+      } else {
+        resolve(stdout.split('\n'));
+      }
+    });
+
+    child.stdin.write(modelContent);
+    child.stdin.end();
+  });
 });

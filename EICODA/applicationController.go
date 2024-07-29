@@ -11,7 +11,7 @@ import (
 
 // ApplicationController is the central part of the system managing all components
 type ApplicationController struct {
-	modelParser   *ModelParser
+	modelParser    *ModelParser
 	transformators map[string]Transformator
 	plugins        map[string]Plugin
 	typeController *repositoryControllers.TypeController
@@ -56,19 +56,40 @@ func (app *ApplicationController) Deploy(path string) error {
 	return nil
 }
 
+// ProcessModel handles the transformation and returns the transformed models
+func (app *ApplicationController) ProcessModel(content string) ([]string, error) {
+	model, err := app.modelParser.ParseFromString(content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse model: %w", err)
+	}
+
+	var results []string
+
+	// Transform the model with the appropriate transformators
+	for name, transformator := range app.transformators {
+		transformedModel, err := transformator.Transform(model, false)
+		if err != nil {
+			return nil, fmt.Errorf("failed to transform model with %s: %w", name, err)
+		}
+		results = append(results, fmt.Sprintf("%s Transformator:\n%s", name, transformedModel))
+	}
+
+	return results, nil
+}
+
 func (app *ApplicationController) transformModel(model *models.Model) error {
 	if app.shouldTransformDockerCompose(model) {
-		if err := app.transformators["DockerCompose"].Transform(model); err != nil {
+		if _, err := app.transformators["DockerCompose"].Transform(model, true); err != nil {
 			return fmt.Errorf("failed to transform model with DockerCompose: %w", err)
 		}
 	}
 	if app.shouldTransformKubernetes(model) {
-		if err := app.transformators["Kubernetes"].Transform(model); err != nil {
+		if _, err := app.transformators["Kubernetes"].Transform(model, true); err != nil {
 			return fmt.Errorf("failed to transform model with Kubernetes: %w", err)
 		}
 	}
 	if app.shouldTransformRabbitMQ(model) {
-		if err := app.transformators["RabbitMQ"].Transform(model); err != nil {
+		if _, err := app.transformators["RabbitMQ"].Transform(model, true); err != nil {
 			return fmt.Errorf("failed to transform model with RabbitMQ: %w", err)
 		}
 	}

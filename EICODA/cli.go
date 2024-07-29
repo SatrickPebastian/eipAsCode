@@ -54,10 +54,32 @@ var addTypeCmd = &cobra.Command{
 	},
 }
 
+var processCmd = &cobra.Command{
+	Use:   "process",
+	Short: "Process a deployment model",
+	Long:  `Process a deployment model and return the transformed models.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		content, _ := cmd.Flags().GetString("content")
+		if content == "" {
+			fmt.Println("Content of the deployment model is required.")
+			return
+		}
+		results, err := appController.ProcessModel(content)
+		if err != nil {
+			fmt.Printf("Processing failed: %v\n", err)
+			return
+		}
+		for _, result := range results {
+			fmt.Println(result)
+		}
+	},
+}
+
 func init() {
 	appController = NewApplicationController()
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(addTypeCmd)
+	rootCmd.AddCommand(processCmd)
 
 	// Define flags and configuration settings
 	deployCmd.Flags().StringP("path", "p", "", "Path to the deployment YAML file")
@@ -65,6 +87,9 @@ func init() {
 
 	addTypeCmd.Flags().StringP("path", "p", "", "Path to the filter type YAML file")
 	addTypeCmd.MarkFlagRequired("path")
+
+	processCmd.Flags().StringP("content", "c", "", "Content of the deployment YAML file")
+	processCmd.MarkFlagRequired("content")
 }
 
 func main() {

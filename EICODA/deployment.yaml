@@ -1,7 +1,7 @@
 pipes:
   queues:
     - id: 3b76043e-676b-4029-9008-b0215cec8e1d
-      name: "myPipe"
+      name: "JOOOO"
       host: "myRabbitOnK8s"
       protocol: "amqp"
     - id: 3b76043e-676b29-9008-b0215cec8e1d
@@ -25,20 +25,20 @@ filters:
     type: "amqpSender"
     message: "Blablabla"
     mappings:
-      - "outputPipe:myPipe"
+      - "outputPipe:JOOOO"
   - id: 577a26d2-216c-4e6e-95e0-e7808f83
     name: "testReceiver"
     host: "myDocker"
     type: "amqpReceiver"
     mappings:
-      - "inputPipe:myPipe"
+      - "inputPipe:JOOOO"
   - id: 577a26d2-216c-4e6e-95e0-e7808f8
     name: "testRouter"
     host: "myKubernetes"
     type: "ConfigurableRouter"
     routingCriterias: routing_logic.json
     mappings:
-      - inputPipe:myPipe
+      - inputPipe:JOOOO
       - outputPipeOne:testOutputOne
       - outputPipeTwo:testOutputTwo
   - id: 577a26-216c-4e6e-95e0-e7808f8
@@ -47,7 +47,7 @@ filters:
     type: "ConfigurableRouter"
     routingCriterias: routing_logic.json
     mappings:
-      - inputPipe:myPipe
+      - inputPipe:JOOOO
       - outputPipeOne:testOutputOne
       - outputPipeTwo:testOutputTwo
       

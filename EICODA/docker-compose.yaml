@@ -1,12 +1,12 @@
 services:
   testreceiver:
     environment:
-    - inputPipe=amqp://admin:password@localhost:5672,myPipe
+    - inputPipe=amqp://admin:password@localhost:5672,JOOOO
     image: pstopper/eicoda-amqp-receiver:latest
     volumes: []
   testrouter:
     environment:
-    - inputPipe=amqp://admin:password@localhost:5672,myPipe
+    - inputPipe=amqp://admin:password@localhost:5672,JOOOO
     - outputPipeOne=amqp://admin:password@localhost:5672,testOutputOne
     - outputPipeTwo=amqp://admin:password@localhost:5672,testOutputTwo
     - routingCriterias=/etc/config/routingCriterias

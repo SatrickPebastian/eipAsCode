@@ -53,8 +53,19 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 		return nil, err
 	}
 
+	return parser.parseData(data)
+}
+
+// ParseFromString parses the YAML content from a string and returns a merged Model
+func (parser *ModelParser) ParseFromString(content string) (*models.Model, error) {
+	data := []byte(content)
+	return parser.parseData(data)
+}
+
+// parseData parses the YAML data and returns a merged Model
+func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 	var model models.Model
-	err = yaml.Unmarshal(data, &model)
+	err := yaml.Unmarshal(data, &model)
 	if err != nil {
 		log.Printf("Error unmarshalling YAML: %v\n", err)
 		return nil, err

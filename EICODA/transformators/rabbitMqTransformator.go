@@ -3,8 +3,6 @@ package transformators
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"eicoda/models"
@@ -14,8 +12,8 @@ import (
 // RabbitMqTransformator is responsible for transforming the model to Terraform format for RabbitMQ
 type RabbitMqTransformator struct{}
 
-// Transform transforms the model to Terraform format for RabbitMQ
-func (t *RabbitMqTransformator) Transform(model *models.Model) error {
+// Transform transforms the model to Terraform format for RabbitMQ and optionally writes to a file
+func (t *RabbitMqTransformator) Transform(model *models.Model, writeFile bool) (string, error) {
 	terraformResources := `
 terraform {
   required_providers {
@@ -64,41 +62,16 @@ provider "rabbitmq" {
 		}
 	}
 
-	// Generate the file at the project root
-	outputPath := filepath.Join("rabbitMqModel.tf")
-	file, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to create RabbitMQ model file: %w", err)
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(terraformResources)
-	if err != nil {
-		return fmt.Errorf("failed to write RabbitMQ model to file: %w", err)
+	// Write to file if writeFile is true
+	if writeFile {
+		outputPath := "rabbitMqModel.tf"
+		err := os.WriteFile(outputPath, []byte(terraformResources), 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write RabbitMQ model to file: %w", err)
+		}
 	}
 
-	fmt.Printf("Successfully created RabbitMQ model file at %s\n", outputPath)
-
-	// Set the TF_INSECURE_SKIP_PROVIDER_VERIFY environment variable
-	os.Setenv("TF_INSECURE_SKIP_PROVIDER_VERIFY", "1")
-
-	// Initialize Terraform
-	initCmd := exec.Command("terraform", "init")
-	initCmd.Env = append(os.Environ(), "TF_INSECURE_SKIP_PROVIDER_VERIFY=1")
-	initOutput, err := initCmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to initialize Terraform: %w, output: %s", err, string(initOutput))
-	}
-
-	// Apply the Terraform configuration
-	applyCmd := exec.Command("terraform", "apply", "-auto-approve")
-	applyOutput, err := applyCmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to apply Terraform configuration: %w, output: %s", err, string(applyOutput))
-	}
-
-	fmt.Printf("Successfully applied RabbitMQ model: %s\n", string(applyOutput))
-	return nil
+	return terraformResources, nil
 }
 
 func createRabbitMqQueueResource(pipe models.Queue, host *models.Host) string {

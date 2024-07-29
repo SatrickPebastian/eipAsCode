@@ -20,14 +20,19 @@
   <div class="container">
     <div class="column left">
       <div class="button-bar">
-        <button id="uploadBtn">+</button>
-        <button id="deployBtn">Deploy</button>
+        <div class="button-bar-left">
+          <button id="uploadBtn">+</button>
+        </div>
+        <div class="button-bar-right">
+          <button id="transformBtn">Transform</button>
+          <button id="deployBtn">Deploy</button>
+        </div>
       </div>
       <input type="file" id="fileInput" style="display:none">
       <div id="editorContainer"></div>
       <div id="errorMessage" class="error-message"></div>
     </div>
-    <div class="column right">
+    <div class="column right" id="outputContainer">
       <!-- Right column content will go here -->
     </div>
   </div>

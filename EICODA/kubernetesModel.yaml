@@ -15,7 +15,7 @@ spec:
       containers:
       - env:
         - name: outputPipe
-          value: amqp://admin:password@rabbitmq:5672,myPipe
+          value: amqp://admin:password@rabbitmq:5672,JOOOO
         - name: interval
           value: "5000"
         - name: message
@@ -42,7 +42,7 @@ spec:
       containers:
       - env:
         - name: inputPipe
-          value: amqp://admin:password@rabbitmq:5672,myPipe
+          value: amqp://admin:password@rabbitmq:5672,JOOOO
         - name: outputPipeOne
           value: amqp://admin:password@rabbitmq:5672,testOutputOne
         - name: outputPipeTwo
@@ -62,20 +62,10 @@ spec:
 ---
 apiVersion: v1
 data:
-  routingCriterias: |
-    {
-      "rules": [
-        {
-          "condition": "message.data.level === 'error'",
-          "outputPipe": "outputPipeOne"
-        },
-        {
-          "condition": "message.data.level === 'info'",
-          "outputPipe": "outputPipeTwo"
-        }
-      ],
-      "defaultOutputPipe": "outputPipeOne"
-    }
+  routingCriterias: "{\r\n  \"rules\": [\r\n    {\r\n      \"condition\": \"message.data.level
+    === 'error'\",\r\n      \"outputPipe\": \"outputPipeOne\"\r\n    },\r\n    {\r\n
+    \     \"condition\": \"message.data.level === 'info'\",\r\n      \"outputPipe\":
+    \"outputPipeTwo\"\r\n    }\r\n  ],\r\n  \"defaultOutputPipe\": \"outputPipeOne\"\r\n}\r\n"
 kind: ConfigMap
 metadata:
   name: testrouter-routingcriterias

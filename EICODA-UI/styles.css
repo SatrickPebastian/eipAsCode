@@ -35,31 +35,53 @@ body {
   .button-bar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 1em;
   }
   
-  button#uploadBtn {
-    font-size: 1.5em;
-    padding: 0.5em;
-    margin-right: 1em;
+  .button-bar-left {
+    display: flex;
+    align-items: center;
   }
   
+  .button-bar-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  button#uploadBtn,
+  button#transformBtn,
   button#deployBtn {
     font-size: 1.5em;
     padding: 0.5em 1em;
   }
   
-  #errorMessage {
-    margin-top: 1em;
-    color: red;
-    font-size: 1em;
-    display: none;
+  #transformBtn,
+  #deployBtn {
+    margin-left: 1em;
   }
   
   #editorContainer {
     flex: 1;
     height: calc(100% - 3em); /* Adjust based on button bar height and margin */
     display: none;
+  }
+  
+  .editor-container {
+    height: 300px; /* Adjust height as needed */
+    margin-bottom: 1em;
+    border: 1px solid #ddd;
+  }
+  
+  h2 {
+    margin: 0 0 0.5em 0;
+  }
+  
+  .error-message {
+    margin-top: 1em;
+    color: red;
+    font-size: 1em;
+    white-space: pre-wrap;
   }
   
   /* Modal styles */

@@ -3,7 +3,6 @@ package transformators
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"eicoda/models"
@@ -14,8 +13,8 @@ import (
 // DockerComposeTransformator is responsible for transforming the model to Docker Compose format
 type DockerComposeTransformator struct{}
 
-// Transform transforms the model to Docker Compose format
-func (t *DockerComposeTransformator) Transform(model *models.Model) error {
+// Transform transforms the model to Docker Compose format and optionally writes to a file
+func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bool) (string, error) {
 	services := make(map[string]interface{})
 	volumes := map[string]interface{}{}
 
@@ -38,23 +37,24 @@ func (t *DockerComposeTransformator) Transform(model *models.Model) error {
 		"volumes":  volumes,
 	}
 
-	// Generate the file at the project root
-	outputPath := filepath.Join(".", "docker-compose.yaml")
-	file, err := os.Create(outputPath)
+	var sb strings.Builder
+	encoder := yaml.NewEncoder(&sb)
+	err := encoder.Encode(composeFile)
 	if err != nil {
-		return fmt.Errorf("failed to create Docker Compose model file: %w", err)
-	}
-	defer file.Close()
-
-	encoder := yaml.NewEncoder(file)
-	err = encoder.Encode(composeFile)
-	if err != nil {
-		return fmt.Errorf("failed to write Docker Compose model to file: %w", err)
+		return "", fmt.Errorf("failed to encode Docker Compose model: %w", err)
 	}
 	encoder.Close()
 
-	fmt.Printf("Successfully created Docker Compose model file at %s\n", outputPath)
-	return nil
+	// Write to file if writeFile is true
+	if writeFile {
+		outputPath := "docker-compose.yaml"
+		err := os.WriteFile(outputPath, []byte(sb.String()), 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write Docker Compose model to file: %w", err)
+		}
+	}
+
+	return sb.String(), nil
 }
 
 func createDockerComposeService(model *models.Model, filter models.Filter, image string) (map[string]interface{}, []string) {

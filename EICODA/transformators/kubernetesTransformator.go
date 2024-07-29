@@ -2,7 +2,6 @@ package transformators
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,8 +14,8 @@ import (
 // KubernetesTransformator is responsible for transforming the model to Kubernetes format
 type KubernetesTransformator struct{}
 
-// Transform transforms the model to Kubernetes format
-func (t *KubernetesTransformator) Transform(model *models.Model) error {
+// Transform transforms the model to Kubernetes format and optionally writes to a file
+func (t *KubernetesTransformator) Transform(model *models.Model, writeFile bool) (string, error) {
 	var resources []interface{}
 
 	for _, filter := range model.Filters {
@@ -31,30 +30,29 @@ func (t *KubernetesTransformator) Transform(model *models.Model) error {
 		}
 	}
 
-	// Generate the file at the project root
-	outputPath := filepath.Join(".", "kubernetesModel.yaml")
-	file, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to create Kubernetes model file: %w", err)
-	}
-	defer file.Close()
-
+	var sb strings.Builder
 	for i, resource := range resources {
-		encoder := yaml.NewEncoder(file)
-		err = encoder.Encode(resource)
+		encoder := yaml.NewEncoder(&sb)
+		err := encoder.Encode(resource)
 		if err != nil {
-			return fmt.Errorf("failed to write Kubernetes resource to file: %w", err)
+			return "", fmt.Errorf("failed to encode Kubernetes resource: %w", err)
 		}
 		encoder.Close()
 		if i < len(resources)-1 {
-			if _, err := file.WriteString("---\n"); err != nil {
-				return fmt.Errorf("failed to write separator: %w", err)
-			}
+			sb.WriteString("---\n")
 		}
 	}
 
-	fmt.Printf("Successfully created Kubernetes model file at %s\n", outputPath)
-	return nil
+	// Write to file if writeFile is true
+	if writeFile {
+		outputPath := filepath.Join(".", "kubernetesModel.yaml")
+		err := os.WriteFile(outputPath, []byte(sb.String()), 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write Kubernetes model to file: %w", err)
+		}
+	}
+
+	return sb.String(), nil
 }
 
 func createKubernetesDeployment(model *models.Model, filter models.Filter, image string) (map[string]interface{}, map[string]interface{}) {
@@ -100,7 +98,7 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 			if config.File {
 				// Handle file-based config
 				filePath := value
-				fileContent, err := ioutil.ReadFile(filepath.Join(".", filePath))
+				fileContent, err := os.ReadFile(filepath.Join(".", filePath))
 				if err != nil {
 					fmt.Printf("failed to read file %s: %v", filePath, err)
 					continue
