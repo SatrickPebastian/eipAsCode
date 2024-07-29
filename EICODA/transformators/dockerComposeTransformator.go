@@ -17,20 +17,25 @@ type DockerComposeTransformator struct{}
 // Transform transforms the model to Docker Compose format
 func (t *DockerComposeTransformator) Transform(model *models.Model) error {
 	services := make(map[string]interface{})
+	volumes := map[string]interface{}{}
 
 	for _, filter := range model.Filters {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "DockerCompose" {
 			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
-			service := createDockerComposeService(model, filter, image)
+			service, serviceVolumes := createDockerComposeService(model, filter, image)
 			serviceName := utils.SanitizeName(filter.Name)
 			services[serviceName] = service
+			for _, volume := range serviceVolumes {
+				volumes[volume] = map[string]interface{}{}
+			}
 		}
 	}
 
 	composeFile := map[string]interface{}{
 		"version":  "3",
 		"services": services,
+		"volumes":  volumes,
 	}
 
 	// Generate the file at the project root
@@ -52,8 +57,11 @@ func (t *DockerComposeTransformator) Transform(model *models.Model) error {
 	return nil
 }
 
-func createDockerComposeService(model *models.Model, filter models.Filter, image string) map[string]interface{} {
+func createDockerComposeService(model *models.Model, filter models.Filter, image string) (map[string]interface{}, []string) {
 	envVars := []string{}
+	volumes := []string{}
+	volumeMounts := []string{}
+
 	for _, mapping := range filter.Mappings {
 		parts := strings.Split(mapping, ":")
 		if len(parts) == 2 {
@@ -84,6 +92,16 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 			if !exists {
 				value = fmt.Sprintf("%v", config.Default)
 			}
+			if config.File {
+				// Handle file-based config
+				volumeName := strings.ToLower(filter.Name + "-" + config.Name)
+				volumes = append(volumes, volumeName)
+				volumeMounts = append(volumeMounts, fmt.Sprintf("%s:/etc/config/%s", volumeName, config.Name))
+
+				// Update the value to point to the new mount path
+				value = fmt.Sprintf("/etc/config/%s", config.Name)
+			}
+
 			envVars = append(envVars, fmt.Sprintf("%s=%s", config.Name, utils.ConvertToProperType(value)))
 		}
 	}
@@ -91,7 +109,8 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 	service := map[string]interface{}{
 		"image":       image,
 		"environment": envVars,
+		"volumes":     volumeMounts,
 	}
 
-	return service
+	return service, volumes
 }

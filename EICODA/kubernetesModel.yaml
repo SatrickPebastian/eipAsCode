@@ -49,7 +49,7 @@ spec:
           value: amqp://admin:password@rabbitmq:5672,testOutputTwo
         - name: interval
           value: "10"
-        image: eicoda/configurable-router:latest
+        image: pstopper/eicoda-configurable-router:latest
         name: testrouter
         volumeMounts:
         - mountPath: /etc/config/routingCriterias

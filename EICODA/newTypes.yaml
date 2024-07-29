@@ -1,11 +1,16 @@
 filterTypes:
-  - name: MessageFilter
-    artifact: MessageFilterArtifact
-    configs:
-      enforces: ["filterCriteria"]
+- name: testTyp
+  artifact: testTypArtifact
+  configs:
+  - name: interval
+    default: 5000
+  - name: message
+    default: "Hello World!"
 
 deploymentArtifacts:
-  - name: MessageFilterArtifact
-    image: eicoda/message-filter:latest
-    type: Docker
-    internalPipes: ["inputPipes", "outputPipes"]
+- name: testTypArtifact
+  image: pstopper/eicoda-amqp-sender:latest
+  type: Docker
+  protocol: amqp
+  internalPipes:
+    - outputPipe

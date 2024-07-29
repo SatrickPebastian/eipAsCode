@@ -41,7 +41,7 @@ deploymentArtifacts:
   internalPipes:
     - inputPipe
 - name: configurableRouterArtifact
-  image: eicoda/configurable-router:latest
+  image: pstopper/eicoda-configurable-router:latest
   type: Docker
   protocol: "amqp"
   internalPipes:

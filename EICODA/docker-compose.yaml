@@ -3,4 +3,17 @@ services:
     environment:
     - inputPipe=amqp://admin:password@localhost:5672,myPipe
     image: pstopper/eicoda-amqp-receiver:latest
+    volumes: []
+  testrouter:
+    environment:
+    - inputPipe=amqp://admin:password@localhost:5672,myPipe
+    - outputPipeOne=amqp://admin:password@localhost:5672,testOutputOne
+    - outputPipeTwo=amqp://admin:password@localhost:5672,testOutputTwo
+    - routingCriterias=/etc/config/routingCriterias
+    - interval=10
+    image: pstopper/eicoda-configurable-router:latest
+    volumes:
+    - testrouter-routingcriterias:/etc/config/routingCriterias
 version: "3"
+volumes:
+  testrouter-routingcriterias: {}

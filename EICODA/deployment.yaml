@@ -41,6 +41,15 @@ filters:
       - inputPipe:myPipe
       - outputPipeOne:testOutputOne
       - outputPipeTwo:testOutputTwo
+  - id: 577a26-216c-4e6e-95e0-e7808f8
+    name: "testRouter"
+    host: "myDocker"
+    type: "ConfigurableRouter"
+    routingCriterias: routing_logic.json
+    mappings:
+      - inputPipe:myPipe
+      - outputPipeOne:testOutputOne
+      - outputPipeTwo:testOutputTwo
       
 hosts:
   pipeHosts:
