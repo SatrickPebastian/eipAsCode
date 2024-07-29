@@ -53,7 +53,7 @@ func (app *ApplicationController) Deploy(path string) error {
 		return err
 	}
 
-	fmt.Printf("Successfully transformed and deployed model: %+v\n", model)
+	fmt.Printf("Successfully transformed and deployed model.")
 	return nil
 }
 
