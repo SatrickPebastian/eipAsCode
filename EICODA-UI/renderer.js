@@ -67,7 +67,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   
     deployBtn.addEventListener('click', () => {
-      // Implement the deploy logic here
+      if (editorInstance) {
+        const modelContent = editorInstance.getValue();
+        ipcRenderer.invoke('deploy-from-ui', modelContent).then(result => {
+          displayOutput(result.join('\n'));
+        }).catch(error => {
+          displayError(error);
+        });
+      }
     });
   
     function openEditor(initialCode = '') {
