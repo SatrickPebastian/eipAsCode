@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; 
+    script-src 'self' https://unpkg.com; 
+    style-src 'self' 'unsafe-inline' https://unpkg.com; 
+    font-src 'self' https://unpkg.com; 
+    worker-src 'self' blob:; 
+    img-src 'self' data:">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EICODA UI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">EICODA</div>
+  </nav>
+  <div class="container">
+    <div class="column left">
+      <div class="button-bar">
+        <button id="uploadBtn">+</button>
+        <button id="deployBtn">Deploy</button>
+      </div>
+      <input type="file" id="fileInput" style="display:none">
+      <div id="editorContainer"></div>
+      <div id="errorMessage" class="error-message"></div>
+    </div>
+    <div class="column right">
+      <!-- Right column content will go here -->
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <button id="newModelBtn">Write new deployment model</button>
+      <button id="uploadFileBtn">Upload file</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

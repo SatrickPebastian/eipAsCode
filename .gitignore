@@ -4,3 +4,4 @@ terraform.tfstate
 rabbitMqModel.tf
 docker-compose.yaml
 kubernetesModel.yaml
+node_modules
