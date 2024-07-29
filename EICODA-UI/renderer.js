@@ -70,7 +70,12 @@ window.addEventListener('DOMContentLoaded', () => {
       if (editorInstance) {
         const modelContent = editorInstance.getValue();
         ipcRenderer.invoke('deploy-from-ui', modelContent).then(result => {
-          displayOutput(result.join('\n'));
+          const output = result.join('\n');
+          if (output.includes('Successfully transformed and deployed model.')) {
+            displaySuccess(output);
+          } else {
+            displayOutput(output);
+          }
         }).catch(error => {
           displayError(error);
         });
@@ -163,6 +168,10 @@ window.addEventListener('DOMContentLoaded', () => {
   
     function displayError(error) {
       outputContainer.innerHTML = `<div class="error-message">${error}</div>`;
+    }
+  
+    function displaySuccess(success) {
+      outputContainer.innerHTML = `<div class="success-message">${success}</div>`;
     }
   });
   

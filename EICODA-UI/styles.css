@@ -84,6 +84,13 @@ body {
     white-space: pre-wrap;
   }
   
+  .success-message {
+    margin-top: 1em;
+    color: green;
+    font-size: 1em;
+    white-space: pre-wrap;
+  }
+  
   /* Modal styles */
   .modal {
     display: none; /* Hidden by default */
