@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -31,8 +31,6 @@ func (parser *ModelParser) loadHostTypes() {
 		log.Fatalf("Error reading host types file: %v", err)
 	}
 
-	log.Printf("Raw hostTypes.yaml content: %s\n", string(data))
-
 	var rawHostTypes struct {
 		Hosts models.HostTypes `yaml:"hosts"`
 	}
@@ -42,15 +40,14 @@ func (parser *ModelParser) loadHostTypes() {
 	}
 
 	parser.hostTypes = rawHostTypes.Hosts
-	log.Printf("Loaded Host Types: %+v\n", parser.hostTypes)
+	fmt.Println("Loaded host types.")
 }
 
 // Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Printf("Error reading file: %v\n", err)
-		return nil, err
+		return nil, fmt.Errorf("error reading file: %w", err)
 	}
 
 	return parser.parseData(data)
@@ -67,13 +64,9 @@ func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 	var model models.Model
 	err := yaml.Unmarshal(data, &model)
 	if err != nil {
-		log.Printf("Error unmarshalling YAML: %v\n", err)
-		return nil, err
+		return nil, fmt.Errorf("error unmarshalling YAML: %w", err)
 	}
 
-	log.Printf("Parsed Model: %+v\n", model)
-
-	// Load types.yaml or mergedTypes.yaml
 	typesFilePath := filepath.Join("repositoryControllers", "types.yaml")
 	mergedTypesFilePath := filepath.Join("repositoryControllers", "mergedTypes.yaml")
 	var typesData []byte
@@ -90,59 +83,47 @@ func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 		}
 	}
 
-	log.Printf("Raw types.yaml/mergedTypes.yaml content: %s\n", string(typesData))
-
 	var combinedTypes models.CombinedTypes
 	err = yaml.Unmarshal(typesData, &combinedTypes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse types file: %w", err)
 	}
 
-	log.Printf("CombinedTypes before merging: %+v\n", combinedTypes)
-
-	// Resolve inheritance for filter types
 	parser.resolveInheritance(&combinedTypes)
 
-	// Merge the parsed model with the loaded types and artifacts
 	err = parser.mergeModels(&model, &combinedTypes)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("CombinedTypes after merging: %+v\n", combinedTypes)
-
-	// Perform correctness checks
 	err = parser.performChecks(&model)
 	if err != nil {
-		return nil, fmt.Errorf("Parsing model failed: %w", err)
+		return nil, fmt.Errorf("parsing model failed: %w", err)
 	}
 
-	// Apply artifacts and mappings from filter types if not set in the filter
 	err = parser.applyFilterTypeArtifacts(&model, &combinedTypes)
 	if err != nil {
 		return nil, err
 	}
 
-	// Perform additional checks on mappings
 	err = parser.checkFilterMappings(&model, &combinedTypes)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("Parsed and Merged Model: %+v\n", model)
+	fmt.Println("Parsed and merged model successfully.")
 	return &model, nil
 }
 
 // mergeModels merges the parsed model with the loaded types and artifacts
 func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *models.CombinedTypes) error {
-	// Check for duplicate filter type names
 	filterTypeNames := make(map[string]bool)
 	for _, ft := range model.FilterTypes {
 		filterTypeNames[ft.Name] = true
 	}
 	for _, ft := range combinedTypes.FilterTypes {
 		if ft.Name == "" {
-			continue // Ignore empty filter types
+			continue
 		}
 		if filterTypeNames[ft.Name] {
 			return fmt.Errorf("duplicate filter type name found: %s", ft.Name)
@@ -150,7 +131,6 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 		model.FilterTypes = append(model.FilterTypes, ft)
 	}
 
-	// Check for duplicate deployment artifact names
 	deploymentArtifactNames := make(map[string]bool)
 	for _, da := range model.DeploymentArtifacts {
 		deploymentArtifactNames[da.Name] = true
@@ -173,7 +153,6 @@ func (parser *ModelParser) resolveInheritance(combinedTypes *models.CombinedType
 	}
 
 	for i := range combinedTypes.FilterTypes {
-		log.Printf("Resolving inheritance for filter type: %s", combinedTypes.FilterTypes[i].Name)
 		parser.inheritFilterTypeProperties(filterTypeMap, &combinedTypes.FilterTypes[i])
 	}
 }
@@ -185,16 +164,12 @@ func (parser *ModelParser) inheritFilterTypeProperties(filterTypeMap map[string]
 
 	parent, exists := filterTypeMap[ft.DerivedFrom]
 	if !exists {
-		log.Printf("Parent filter type %s not found for filter type %s", ft.DerivedFrom, ft.Name)
+		fmt.Printf("Parent filter type %s not found for filter type %s\n", ft.DerivedFrom, ft.Name)
 		return
 	}
 
-	log.Printf("Inheriting properties from parent filter type %s to %s", parent.Name, ft.Name)
-
-	// Recursively inherit from the parent first
 	parser.inheritFilterTypeProperties(filterTypeMap, parent)
 
-	// Inherit configurations
 	if parent.Configs != nil {
 		for _, parentConfig := range parent.Configs {
 			exists := false
@@ -210,7 +185,6 @@ func (parser *ModelParser) inheritFilterTypeProperties(filterTypeMap map[string]
 		}
 	}
 
-	// Inherit artifact if not set
 	if ft.Artifact == "" {
 		ft.Artifact = parent.Artifact
 	}
@@ -230,11 +204,9 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 
 		filterType, exists := filterTypeMap[filter.Type]
 		if !exists {
-			log.Printf("Filter type %s not found for filter %s", filter.Type, filter.Name)
 			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
 		}
 
-		// Initialize AdditionalProps if it is nil
 		if filter.AdditionalProps == nil {
 			filter.AdditionalProps = make(map[string]string)
 		}
@@ -243,16 +215,13 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 			_, exists := filter.AdditionalProps[config.Name]
 			if !exists || filter.AdditionalProps[config.Name] == "" {
 				if config.Default != nil {
-					log.Printf("Setting default value for %s: %v", config.Name, config.Default)
 					filter.AdditionalProps[config.Name] = fmt.Sprintf("%v", config.Default)
 				} else {
-					log.Printf("Filter %s of type %s is missing required property: %s", filter.Name, filter.Type, config.Name)
 					return fmt.Errorf("filter %s of type %s is missing required property: %s", filter.Name, filter.Type, config.Name)
 				}
 			}
 		}
 
-		// Check for any additional properties not allowed by the config
 		for prop := range filter.AdditionalProps {
 			allowed := false
 			for _, config := range filterType.Configs {
@@ -262,7 +231,6 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 				}
 			}
 			if !allowed {
-				log.Printf("Filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
 				return fmt.Errorf("filter %s of type %s has an invalid property: %s", filter.Name, filter.Type, prop)
 			}
 		}
@@ -280,22 +248,16 @@ func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combine
 
 	for i, filter := range model.Filters {
 		if filter.Type == "Custom" && filter.Artifact != "" {
-			log.Printf("Custom filter %s is using artifact %s\n", filter.Name, filter.Artifact)
 			continue
 		}
 
 		filterType, exists := filterTypeMap[filter.Type]
 		if !exists {
-			log.Printf("Filter type %s not found for filter %s", filter.Type, filter.Name)
 			return fmt.Errorf("filter type %s not found for filter %s", filter.Type, filter.Name)
 		}
 
-		// Apply inherited artifact if filter's artifact is not explicitly set
 		if filterType.Artifact != "" && filter.Artifact == "" {
 			filter.Artifact = filterType.Artifact
-			log.Printf("Filter %s of type %s is using inherited artifact %s\n", filter.Name, filter.Type, filterType.Artifact)
-		} else if filter.Artifact != "" {
-			log.Printf("Filter %s is using artifact %s\n", filter.Name, filter.Artifact)
 		}
 
 		model.Filters[i] = filter
@@ -306,37 +268,31 @@ func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combine
 
 // performChecks performs various correctness checks on the parsed model
 func (parser *ModelParser) performChecks(model *models.Model) error {
-	// Check for duplicate IDs
 	err := parser.checkForDuplicateIDs(model)
 	if err != nil {
 		return err
 	}
 
-	// Check if the host field of each queue refers to a defined name of a pipeHost
 	err = parser.checkQueueHosts(model)
 	if err != nil {
 		return err
 	}
 
-	// Check if the protocol is either amqp or mqtt
 	err = parser.checkQueueProtocols(model)
 	if err != nil {
 		return err
 	}
 
-	// Check if the host field of each filter refers to a defined name of a filterHost
 	err = parser.checkFilterHosts(model)
 	if err != nil {
 		return err
 	}
 
-	// Check the types of pipeHosts and filterHosts
 	err = parser.checkHostTypes(model)
 	if err != nil {
 		return err
 	}
 
-	// Check filter type enforcements
 	err = parser.checkFilterTypeEnforcements(model)
 	if err != nil {
 		return err
@@ -356,7 +312,7 @@ func (parser *ModelParser) checkForDuplicateIDs(model *models.Model) error {
 		idSet[queue.ID] = true
 	}
 
-	for _, topic := range model.Pipes.Topics { // Add this block to check for duplicate topic IDs
+	for _, topic := range model.Pipes.Topics {
 		if idSet[topic.ID] {
 			return fmt.Errorf("duplicate ID found: %s", topic.ID)
 		}
@@ -400,7 +356,7 @@ func (parser *ModelParser) checkQueueHosts(model *models.Model) error {
 		}
 	}
 
-	for _, topic := range model.Pipes.Topics { // Add this block to check if the host field of each topic refers to a defined name of a pipeHost
+	for _, topic := range model.Pipes.Topics {
 		if !pipeHosts[topic.Host] {
 			return fmt.Errorf("topic host %s is not defined as a pipeHost", topic.Host)
 		}
@@ -416,7 +372,7 @@ func (parser *ModelParser) checkQueueProtocols(model *models.Model) error {
 			return fmt.Errorf("queue protocol %s is invalid for queue %s", queue.Protocol, queue.Name)
 		}
 	}
-	for _, topic := range model.Pipes.Topics { // Add this block to check if the protocol is either amqp or mqtt for topics
+	for _, topic := range model.Pipes.Topics {
 		if topic.Protocol != "amqp" && topic.Protocol != "mqtt" {
 			return fmt.Errorf("topic protocol %s is invalid for topic %s", topic.Protocol, topic.Name)
 		}
@@ -446,7 +402,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 	for _, queue := range model.Pipes.Queues {
 		definedPipes[queue.Name] = true
 	}
-	for _, topic := range model.Pipes.Topics { // Add this block to include topics in the defined pipes
+	for _, topic := range model.Pipes.Topics {
 		definedPipes[topic.Name] = true
 	}
 
@@ -457,8 +413,6 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 	for _, artifact := range model.DeploymentArtifacts {
 		artifactMap[artifact.Name] = artifact
 	}
-
-	log.Printf("ArtifactMap: %+v\n", artifactMap)
 
 	for _, filter := range model.Filters {
 		artifact, exists := artifactMap[filter.Artifact]
@@ -500,7 +454,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 					break
 				}
 			}
-			for _, topic := range model.Pipes.Topics { // Add this block to get the protocol for topics
+			for _, topic := range model.Pipes.Topics {
 				if topic.Name == pipeName {
 					pipeProtocol = topic.Protocol
 					break
@@ -512,7 +466,6 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			}
 		}
 
-		// Ensure all internal pipes are covered in the mappings
 		internalPipesSet := make(map[string]bool)
 		for _, internalPipe := range artifact.InternalPipes {
 			internalPipesSet[internalPipe] = true
@@ -534,22 +487,18 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 
 // checkHostTypes checks if pipeHosts have type RabbitMQ and filterHosts have type Kubernetes or DockerCompose
 func (parser *ModelParser) checkHostTypes(model *models.Model) error {
-	log.Printf("Validating pipeHosts: %+v\n", model.Hosts.PipeHosts)
 	for _, host := range model.Hosts.PipeHosts {
 		valid := false
 		for _, ht := range parser.hostTypes.PipeHosts {
-			log.Printf("Checking host type: %s against %s\n", host.Type, ht.Name)
 			if host.Type == ht.Name {
 				valid = true
 
-				// Check for additional properties not defined in the host type configs
 				for prop := range host.AdditionalProps {
 					if !contains(ht.Configs, prop) {
 						return fmt.Errorf("pipeHost %s of type %s has invalid property: %s", host.Name, host.Type, prop)
 					}
 				}
 
-				// Check for missing required properties
 				for _, config := range ht.Configs {
 					if _, exists := host.AdditionalProps[config]; !exists {
 						return fmt.Errorf("pipeHost %s of type %s is missing required property: %s", host.Name, host.Type, config)
@@ -563,22 +512,18 @@ func (parser *ModelParser) checkHostTypes(model *models.Model) error {
 		}
 	}
 
-	log.Printf("Validating filterHosts: %+v\n", model.Hosts.FilterHosts)
 	for _, host := range model.Hosts.FilterHosts {
 		valid := false
 		for _, ht := range parser.hostTypes.FilterHosts {
-			log.Printf("Checking host type: %s against %s\n", host.Type, ht.Name)
 			if host.Type == ht.Name {
 				valid = true
 
-				// Check for additional properties not defined in the host type configs
 				for prop := range host.AdditionalProps {
 					if !contains(ht.Configs, prop) {
 						return fmt.Errorf("filterHost %s of type %s has invalid property: %s", host.Name, host.Type, prop)
 					}
 				}
 
-				// Check for missing required properties
 				for _, config := range ht.Configs {
 					if _, exists := host.AdditionalProps[config]; !exists {
 						return fmt.Errorf("filterHost %s of type %s is missing required property: %s", host.Name, host.Type, config)

@@ -37,17 +37,18 @@ func NewApplicationController() *ApplicationController {
 
 // Deploy handles the deployment process
 func (app *ApplicationController) Deploy(path string) error {
+	fmt.Println("Starting deployment process...")
 	model, err := app.modelParser.Parse(path)
 	if err != nil {
 		return fmt.Errorf("failed to parse model: %w", err)
 	}
 
-	// Transform the model with the appropriate transformators
+	fmt.Println("Transforming model...")
 	if err := app.transformModel(model); err != nil {
 		return err
 	}
 
-	// Execute the plugins based on the model
+	fmt.Println("Executing plugins...")
 	if err := app.executePlugins(model); err != nil {
 		return err
 	}
@@ -58,6 +59,7 @@ func (app *ApplicationController) Deploy(path string) error {
 
 // ProcessModel handles the transformation and returns the transformed models
 func (app *ApplicationController) ProcessModel(content string) ([]string, error) {
+	fmt.Println("Processing model content...")
 	model, err := app.modelParser.ParseFromString(content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse model: %w", err)
@@ -65,7 +67,7 @@ func (app *ApplicationController) ProcessModel(content string) ([]string, error)
 
 	var results []string
 
-	// Transform the model with the appropriate transformators
+	fmt.Println("Transforming model with appropriate transformators...")
 	for name, transformator := range app.transformators {
 		transformedModel, err := transformator.Transform(model, false)
 		if err != nil {
@@ -78,17 +80,23 @@ func (app *ApplicationController) ProcessModel(content string) ([]string, error)
 }
 
 func (app *ApplicationController) transformModel(model *models.Model) error {
+	fmt.Println("Checking if transformation for DockerCompose is needed...")
 	if app.shouldTransformDockerCompose(model) {
+		fmt.Println("Transforming model for DockerCompose...")
 		if _, err := app.transformators["DockerCompose"].Transform(model, true); err != nil {
 			return fmt.Errorf("failed to transform model with DockerCompose: %w", err)
 		}
 	}
+	fmt.Println("Checking if transformation for Kubernetes is needed...")
 	if app.shouldTransformKubernetes(model) {
+		fmt.Println("Transforming model for Kubernetes...")
 		if _, err := app.transformators["Kubernetes"].Transform(model, true); err != nil {
 			return fmt.Errorf("failed to transform model with Kubernetes: %w", err)
 		}
 	}
+	fmt.Println("Checking if transformation for RabbitMQ is needed...")
 	if app.shouldTransformRabbitMQ(model) {
+		fmt.Println("Transforming model for RabbitMQ...")
 		if _, err := app.transformators["RabbitMQ"].Transform(model, true); err != nil {
 			return fmt.Errorf("failed to transform model with RabbitMQ: %w", err)
 		}
@@ -97,16 +105,19 @@ func (app *ApplicationController) transformModel(model *models.Model) error {
 }
 
 func (app *ApplicationController) executePlugins(model *models.Model) error {
+	fmt.Println("Executing Terraform plugin if needed...")
 	if app.shouldTransformRabbitMQ(model) {
 		if err := app.plugins["Terraform"].Execute(); err != nil {
 			return fmt.Errorf("Terraform plugin execution failed: %w", err)
 		}
 	}
+	fmt.Println("Executing Kubernetes plugin if needed...")
 	if app.shouldTransformKubernetes(model) {
 		if err := app.plugins["Kubernetes"].Execute(); err != nil {
 			return fmt.Errorf("Kubernetes plugin execution failed: %w", err)
 		}
 	}
+	fmt.Println("Executing DockerCompose plugin if needed...")
 	if app.shouldTransformDockerCompose(model) {
 		if err := app.plugins["DockerCompose"].Execute(); err != nil {
 			return fmt.Errorf("DockerCompose plugin execution failed: %w", err)
