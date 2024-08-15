@@ -1,71 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: testsender
+  name: webshopbackend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: testsender
+      app: webshopbackend
   template:
     metadata:
       labels:
-        app: testsender
+        app: webshopbackend
     spec:
       containers:
       - env:
-        - name: outputPipe
-          value: amqp://admin:password@rabbitmq:5672,JOOOO
-        - name: interval
-          value: "5000"
-        - name: message
-          value: Blablabla
-        image: pstopper/eicoda-amqp-sender:latest
-        name: testsender
+        - name: internalOrdersPipe
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/backend-container:latest
+        name: webshopbackend
         volumeMounts: []
       volumes: []
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: testrouter
+  name: ordertranslator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: testrouter
+      app: ordertranslator
   template:
     metadata:
       labels:
-        app: testrouter
+        app: ordertranslator
     spec:
       containers:
       - env:
-        - name: inputPipe
-          value: amqp://admin:password@rabbitmq:5672,JOOOO
-        - name: outputPipeOne
-          value: amqp://admin:password@rabbitmq:5672,testOutputOne
-        - name: outputPipeTwo
-          value: amqp://admin:password@rabbitmq:5672,testOutputTwo
-        - name: interval
-          value: "10"
-        image: pstopper/eicoda-configurable-router:latest
-        name: testrouter
-        volumeMounts:
-        - mountPath: /etc/config/routingCriterias
-          name: testrouter-routingcriterias
-          subPath: routingCriterias
-      volumes:
-      - configMap:
-          name: testrouter-routingcriterias
-        name: testrouter-routingcriterias
----
-apiVersion: v1
-data:
-  routingCriterias: "{\r\n  \"rules\": [\r\n    {\r\n      \"condition\": \"message.data.level
-    === 'error'\",\r\n      \"outputPipe\": \"outputPipeOne\"\r\n    },\r\n    {\r\n
-    \     \"condition\": \"message.data.level === 'info'\",\r\n      \"outputPipe\":
-    \"outputPipeTwo\"\r\n    }\r\n  ],\r\n  \"defaultOutputPipe\": \"outputPipeOne\"\r\n}\r\n"
-kind: ConfigMap
-metadata:
-  name: testrouter-routingcriterias
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        - name: out
+          value: amqp://admin:password@rabbitmq:5672,TaxQueue
+        image: eicoda/message-translator:latest
+        name: ordertranslator
+        volumeMounts: []
+      volumes: []

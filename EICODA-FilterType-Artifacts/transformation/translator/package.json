@@ -1,0 +1,13 @@
+{
+  "name": "message-translator",
+  "version": "1.0.0",
+  "description": "Message Translator for AMQP using JSONata",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.7.1",
+    "jsonata": "^1.8.5"
+  }
+}

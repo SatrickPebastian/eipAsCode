@@ -1,34 +1,78 @@
 filterTypes:
-  - name: Router
+  - name: Sender
+    artifact: SenderArtifact
     configs:
-      - name: routingCriterias
-        file: true
+      - name: data
       - name: interval
-        default: 10
-  - name: Transformator
-    configs:
-      - name: sourceFormat
-      - name: targetFormat
-      - name: transformationRules
-  - name: ConfigurableRouter
-    artifact: configurableRouterArtifact
-    derivesFrom: Router
-  - name: ConfigurableTransformator
-    artifact: configurableTransformatorArtifact
-    derivesFrom: Transformator
+      - name: eventType
+  - name: Receiver
+    artifact: ReceiverArtifact
   - name: Custom
+  - name: Router
+    artifact: RouterArtifact
+    configs:
+      - name: criteria
+        file: true
+      - name: mode
+        default: "single"
+  - name: MessageFilter
+    artifact: MessageFilterArtifact
+    configs: 
+      - name: criteria
+        file: true
+  - name: Splitter
+    configs: 
+      - name: criteria
+        file: true
+  - name: Aggregator
+    configs: 
+      - name: criteria
+        file: true
+  - name: Resequencer
+    artifact: ResequencerArtifact
+    configs: 
+      - name: count
+      - name: field
+  - name: MessageTranslator
+    artifact: MessageTranslatorArtifact
+    configs: 
+      - name: criteria
+        file: true
+  - name: ContentFilter
+    artifact: ContentFilterArtifact
+    configs: 
+      - name: fieldsToFilter
+  - name: ContentEnricher
+    configs: 
+      - name: criteria
+        file: true
 
 deploymentArtifacts:
-  - name: messageFilterArtifact
+  - name: SenderArtifact
+    image: eicoda/sender:latest
+    type: Docker
+    internalPipes: ["out"]
+  - name: ReceiverArtifact
+    image: eicoda/receiver:latest
+    type: Docker
+    internalPipes: ["in"]
+  - name: RouterArtifact
+    image: eicoda/router:latest
+    type: Docker
+    internalPipes: ["in", "outOne", "outTwo"]
+  - name: MessageFilterArtifact
     image: eicoda/message-filter:latest
     type: Docker
-    internalPipes: ["inputPipes", "outputPipes"]
-  - name: configurableRouterArtifact
-    image: eicoda/configurable-router:latest
+    internalPipes: ["in", "out"]
+  - name: ResequencerArtifact
+    image: eicoda/resequencer:latest
     type: Docker
-    internalPipes: ["inputPipes", "outputPipes"]
-  - name: configurableTransformatorArtifact
-    image: eicoda/configurable-transformator:latest
+    internalPipes: ["in", "out"]
+  - name: MessageTranslatorArtifact
+    image: eicoda/message-translator:latest
     type: Docker
-    internalPipes: ["inputPipes", "outputPipes"]
-
+    internalPipes: ["in", "out"]
+  - name: ContentFilterArtifact
+    image: eicoda/content-filter:latest
+    type: Docker
+    internalPipes: ["in", "out"]

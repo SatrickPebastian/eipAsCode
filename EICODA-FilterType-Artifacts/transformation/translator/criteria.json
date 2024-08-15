@@ -1,0 +1,5 @@
+{
+  "taxes": "message.data.price * 0.19",
+  "averageRatings": "$average(data.ratings)",
+  "formattedDate": "$fromMillis(data.timestamp, '[Y0001]-[M01]-[D01]')"
+}

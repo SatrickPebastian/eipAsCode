@@ -1,0 +1,9 @@
+{
+  "criterias": [
+    {
+      "condition": "message.data.level === 'error'",
+      "destination": "outTwo"
+    }
+  ],
+  "default": "outOne"
+}

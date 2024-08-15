@@ -9,5 +9,8 @@ hosts:
         - "management_port"
 
   filterHosts:
-    - name: DockerCompose
+    - name: DockerEngine
     - name: Kubernetes
+      configs:
+        - "kubeConfig"
+        - "cluster"

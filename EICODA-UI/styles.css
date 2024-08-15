@@ -61,6 +61,11 @@ body {
     margin-left: 1em;
   }
   
+  #deployBtn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
   #editorContainer {
     flex: 1;
     height: calc(100% - 3em); /* Adjust based on button bar height and margin */
@@ -87,6 +92,13 @@ body {
   .success-message {
     margin-top: 1em;
     color: green;
+    font-size: 1em;
+    white-space: pre-wrap;
+  }
+  
+  .deployment-message {
+    margin-top: 1em;
+    color: blue;
     font-size: 1em;
     white-space: pre-wrap;
   }

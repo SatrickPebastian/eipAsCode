@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     rabbitmq = {
@@ -14,8 +13,8 @@ provider "rabbitmq" {
   password  = "password"
 }
 
-resource "rabbitmq_queue" "JOOOO" {
-  name      = "JOOOO"
+resource "rabbitmq_queue" "OrderQueue" {
+  name      = "OrderQueue"
   vhost     = "/"
   settings {
     durable    = true
@@ -24,32 +23,11 @@ resource "rabbitmq_queue" "JOOOO" {
 }
 
 
-resource "rabbitmq_queue" "testOutputOne" {
-  name      = "testOutputOne"
+resource "rabbitmq_queue" "TaxQueue" {
+  name      = "TaxQueue"
   vhost     = "/"
   settings {
     durable    = true
-    auto_delete = false
-  }
-}
-
-
-resource "rabbitmq_queue" "testOutputTwo" {
-  name      = "testOutputTwo"
-  vhost     = "/"
-  settings {
-    durable    = true
-    auto_delete = false
-  }
-}
-
-
-resource "rabbitmq_exchange" "testTopic" {
-  name  = "testTopic"
-  vhost = "/"
-  settings {
-    type        = "topic"
-    durable     = true
     auto_delete = false
   }
 }

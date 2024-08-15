@@ -1,0 +1,77 @@
+pipes:
+  queues:
+    - id: 769dd0e1-29f2-4b97-ab6e-019151ba15c3
+      name: "OrderPipe"
+      host: "OrdersRabbitMQ"
+      protocol: "amqp"
+    - id: 47ca8fce-8631-4c42-be24-22a1a49ef3cd
+      name: "HighPricePipe"
+      host: "OrdersRabbitMQ"
+      protocol: "amqp"
+    - id: 9bf3c012-0492-4708-9037-6dde3e98d4d1
+      name: "ShippingPipe"
+      host: "OrdersRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 46dc9642-53a7-4f38-8868-dfce3511d554
+    name: "WebshopBackend"
+    host: "europeKubernetes"
+    type: "Custom"
+    artifact: webshopBackendArtifact
+    mappings:
+      - "outputPipe:OrderPipe"
+  - id: ec3affb6-bcfc-471b-8f06-74892e2c21db
+    name: "OrderRouter"
+    host: "europeDockerCompose"
+    type: "BiContentBasedRouter"
+    routingCriterias: routing_logic.json
+    mappings:
+      - "inputPipe:OrderPipe"
+      - "outputPipeOne:ShippingPipe"
+      - "outputPipeTwo:HighPricePipe"
+  - id: ee3ef478-eda4-4f72-89cb-53adc2cafc40
+    name: "OrderEnricher"
+    host: "europeDockerCompose"
+    type: "Enricher"
+    data: 
+      addGift: true
+    mappings:
+      - inputPipe:HighPricePipe
+      - outputPipe:ShippingPipe
+  - id: a81b0d8f-1dac-48c6-8948-b265ca6df2ac
+    name: "ShippingApp"
+    host: "eastAsiaKubernetes"
+    type: "Custom"
+    artifact: shippingAppArtifact
+    mappings:
+      - inputPipe:ShippingPipe
+      
+hosts:
+  pipeHosts:
+    - id: e8c5365e-aec4-4b66-a9ba-c6d70ddecf72
+      name: "myRabbitOnK8s"
+      type: "RabbitMQ"
+      username: admin
+      password: password
+      messaging_port: 5672
+      management_port: 15672
+      host_address: localhost
+    
+  filterHosts:
+    - id: 7ba70564-8833-469f-adc9-f6ef33fdf89f
+      name: "myKubernetes"
+      type: "Kubernetes"
+    - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf
+      name: "myDocker"
+      type: "DockerCompose"
+
+deploymentArtifacts:
+  - name: webshopBackendArtifact
+    image: eicoda/case-study-backend:latest
+    type: Docker
+    internalPipes: ["outputPipe"]
+  - name: shippingAppArtifact
+    image: eicoda/case-study-shipping-app:latest
+    type: Docker
+    internalPipes: ["inputPipe"]

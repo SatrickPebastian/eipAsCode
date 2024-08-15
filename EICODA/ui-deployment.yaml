@@ -69,3 +69,4 @@ hosts:
     - id: ebe07dd4-7e7e-4d5c-bffd-4d2c94eebf
       name: "myDocker"
       type: "DockerCompose"
+

@@ -128,7 +128,7 @@ func (app *ApplicationController) executePlugins(model *models.Model) error {
 
 func (app *ApplicationController) shouldTransformDockerCompose(model *models.Model) bool {
 	for _, host := range model.Hosts.FilterHosts {
-		if host.Type == "DockerCompose" {
+		if host.Type == "DockerEngine" {
 			for _, filter := range model.Filters {
 				if filter.Host == host.Name {
 					return true

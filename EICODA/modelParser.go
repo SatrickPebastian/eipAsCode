@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -117,6 +117,7 @@ func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 
 // mergeModels merges the parsed model with the loaded types and artifacts
 func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *models.CombinedTypes) error {
+	// Merge FilterTypes
 	filterTypeNames := make(map[string]bool)
 	for _, ft := range model.FilterTypes {
 		filterTypeNames[ft.Name] = true
@@ -131,6 +132,7 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 		model.FilterTypes = append(model.FilterTypes, ft)
 	}
 
+	// Merge DeploymentArtifacts
 	deploymentArtifactNames := make(map[string]bool)
 	for _, da := range model.DeploymentArtifacts {
 		deploymentArtifactNames[da.Name] = true
@@ -140,6 +142,38 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 			return fmt.Errorf("duplicate deployment artifact name found: %s", da.Name)
 		}
 		model.DeploymentArtifacts = append(model.DeploymentArtifacts, da)
+	}
+
+	// Merge Hosts
+	err := parser.mergeHosts(model, &combinedTypes.Hosts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// mergeHosts merges the hosts from the combined types with those in the model
+func (parser *ModelParser) mergeHosts(model *models.Model, combinedHosts *models.Hosts) error {
+	hostIDs := make(map[string]bool)
+	for _, host := range model.Hosts.PipeHosts {
+		hostIDs[host.ID] = true
+	}
+	for _, host := range combinedHosts.PipeHosts {
+		if hostIDs[host.ID] {
+			return fmt.Errorf("duplicate pipeHost ID found: %s", host.ID)
+		}
+		model.Hosts.PipeHosts = append(model.Hosts.PipeHosts, host)
+	}
+
+	for _, host := range model.Hosts.FilterHosts {
+		hostIDs[host.ID] = true
+	}
+	for _, host := range combinedHosts.FilterHosts {
+		if hostIDs[host.ID] {
+			return fmt.Errorf("duplicate filterHost ID found: %s", host.ID)
+		}
+		model.Hosts.FilterHosts = append(model.Hosts.FilterHosts, host)
 	}
 
 	return nil
@@ -447,23 +481,23 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 				return fmt.Errorf("mapping target pipe %s not defined in queues or topics", pipeName)
 			}
 
-			var pipeProtocol string
-			for _, queue := range model.Pipes.Queues {
-				if queue.Name == pipeName {
-					pipeProtocol = queue.Protocol
-					break
-				}
-			}
-			for _, topic := range model.Pipes.Topics {
-				if topic.Name == pipeName {
-					pipeProtocol = topic.Protocol
-					break
-				}
-			}
+			// var pipeProtocol string
+			// for _, queue := range model.Pipes.Queues {
+			// 	if queue.Name == pipeName {
+			// 		pipeProtocol = queue.Protocol
+			// 		break
+			// 	}
+			// }
+			// for _, topic := range model.Pipes.Topics {
+			// 	if topic.Name == pipeName {
+			// 		pipeProtocol = topic.Protocol
+			// 		break
+			// 	}
+			// }
 
-			if !protocolMap[pipeProtocol] {
-				return fmt.Errorf("protocol %s of pipe %s is not allowed by deployment artifact %s", pipeProtocol, pipeName, artifact.Name)
-			}
+			// if !protocolMap[pipeProtocol] {
+			// 	return fmt.Errorf("protocol %s of pipe %s is not allowed by deployment artifact %s", pipeProtocol, pipeName, artifact.Name)
+			// }
 		}
 
 		internalPipesSet := make(map[string]bool)

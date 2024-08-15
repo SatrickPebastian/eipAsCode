@@ -1,0 +1,12 @@
+{
+  "name": "content-based-router",
+  "version": "1.0.0",
+  "description": "Content-Based Router for AMQP",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.7.1"
+  }
+}

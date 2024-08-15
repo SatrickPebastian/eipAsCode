@@ -1,57 +1,130 @@
 filterTypes:
-- name: amqpSender
-  artifact: amqpSenderContainer
+- name: Sender
+  artifact: SenderArtifact
   configs:
+  - name: data
   - name: interval
-    default: 5000
-  - name: message
-    default: "Hello World!"
-- name: amqpReceiver
-  artifact: amqpReceiverContainer
-- name: Router
-  configs:
-    - name: routingCriterias
-      file: true
-    - name: interval
-      default: 10
-- name: Transformator
-  configs:
-    - name: sourceFormat
-    - name: targetFormat
-    - name: transformationRules
-- name: ConfigurableRouter
-  artifact: configurableRouterArtifact
-  derivedFrom: Router
-- name: ConfigurableTransformator
-  artifact: configurableTransformatorArtifact
-  derivedFrom: Transformator
+  - name: eventType
+- name: Receiver
+  artifact: ReceiverArtifact
 - name: Custom
-
+- name: Router
+  artifact: RouterArtifact
+  configs:
+  - name: criteria
+    file: true
+  - name: mode
+    default: single
+- name: MessageFilter
+  artifact: MessageFilterArtifact
+  configs:
+  - name: criteria
+    file: true
+- name: Splitter
+  configs:
+  - name: criteria
+    file: true
+- name: Aggregator
+  configs:
+  - name: criteria
+    file: true
+- name: Resequencer
+  artifact: ResequencerArtifact
+  configs:
+  - name: count
+  - name: field
+- name: MessageTranslator
+  artifact: MessageTranslatorArtifact
+  configs:
+  - name: criteria
+    file: true
+- name: ContentFilter
+  artifact: ContentFilterArtifact
+  configs:
+  - name: fieldsToFilter
+- name: ContentEnricher
+  configs:
+  - name: criteria
+    file: true
+- name: Backend
+  artifact: BackendContainer
 deploymentArtifacts:
-- name: amqpSenderContainer
-  image: pstopper/eicoda-amqp-sender:latest
+- name: SenderArtifact
   type: Docker
-  protocol: amqp
+  image: eicoda/sender:latest
+  protocol: ""
   internalPipes:
-    - outputPipe
-- name: amqpReceiverContainer
-  image: pstopper/eicoda-amqp-receiver:latest
+  - out
+- name: ReceiverArtifact
   type: Docker
-  protocol: amqp
+  image: eicoda/receiver:latest
+  protocol: ""
   internalPipes:
-    - inputPipe
-- name: configurableRouterArtifact
-  image: pstopper/eicoda-configurable-router:latest
+  - in
+- name: RouterArtifact
   type: Docker
-  protocol: "amqp"
+  image: eicoda/router:latest
+  protocol: ""
   internalPipes:
-  - inputPipe
-  - outputPipeOne
-  - outputPipeTwo
-- name: configurableTransformatorArtifact
-  image: eicoda/configurable-transformator:latest
+  - in
+  - outOne
+  - outTwo
+- name: MessageFilterArtifact
   type: Docker
-  protocol: "amqp"
+  image: eicoda/message-filter:latest
+  protocol: ""
   internalPipes:
-  - inputPipes
-  - outputPipes
+  - in
+  - out
+- name: ResequencerArtifact
+  type: Docker
+  image: eicoda/resequencer:latest
+  protocol: ""
+  internalPipes:
+  - in
+  - out
+- name: MessageTranslatorArtifact
+  type: Docker
+  image: eicoda/message-translator:latest
+  protocol: ""
+  internalPipes:
+  - in
+  - out
+- name: ContentFilterArtifact
+  type: Docker
+  image: eicoda/content-filter:latest
+  protocol: ""
+  internalPipes:
+  - in
+  - out
+- name: BackendContainer
+  type: Docker
+  image: pstopper/backend-container:latest
+  protocol: ""
+  internalPipes:
+  - internalOrdersPipe
+- name: TaxProcessorArtifact
+  type: Docker
+  image: pstopper/tax-processor:latest
+  protocol: ""
+  internalPipes:
+  - taxInput
+hosts:
+  pipeHosts:
+  - id: b8156cf9
+    name: devRabbitMQ
+    type: RabbitMQ
+    host_address: localhost
+    management_port: "15672"
+    messaging_port: "5672"
+    password: password
+    username: admin
+  filterHosts:
+  - id: 4d2c94eebf
+    name: devKubernetes
+    type: Kubernetes
+    cluster: minikube
+    kubeConfig: C:/Users/pstopper/.kube/config
+  - id: ebe07dd4
+    name: devDockerCompose
+    type: DockerEngine

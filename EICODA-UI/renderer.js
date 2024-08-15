@@ -2,6 +2,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const { ipcRenderer } = window.electron;
   
     let editorInstance = null;
+    let isTransformed = false;
   
     const uploadBtn = document.getElementById('uploadBtn');
     const transformBtn = document.getElementById('transformBtn');
@@ -67,15 +68,12 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   
     deployBtn.addEventListener('click', () => {
-      if (editorInstance) {
+      if (isTransformed && editorInstance) {
         const modelContent = editorInstance.getValue();
+        displayDeploymentMessage("Deployment getting executed...");
         ipcRenderer.invoke('deploy-from-ui', modelContent).then(result => {
           const output = result.join('\n');
-          if (output.includes('Successfully transformed and deployed model.')) {
-            displaySuccess(output);
-          } else {
-            displayOutput(output);
-          }
+          displayOutput(output);
         }).catch(error => {
           displayError(error);
         });
@@ -105,10 +103,17 @@ window.addEventListener('DOMContentLoaded', () => {
     function displayOutput(output) {
       outputContainer.innerHTML = ''; // Clear any existing content
   
+      if (output.includes('Successfully transformed and deployed model.')) {
+        displaySuccess(output);
+        return;
+      }
+  
       const sections = parseOutput(output);
   
       if (Object.keys(sections).length === 0) {
         displayError(output);
+        isTransformed = false;
+        updateDeployButton();
         return;
       }
   
@@ -134,6 +139,9 @@ window.addEventListener('DOMContentLoaded', () => {
           });
         });
       });
+  
+      isTransformed = true;
+      updateDeployButton();
     }
   
     function parseOutput(output) {
@@ -168,10 +176,24 @@ window.addEventListener('DOMContentLoaded', () => {
   
     function displayError(error) {
       outputContainer.innerHTML = `<div class="error-message">${error}</div>`;
+      isTransformed = false;
+      updateDeployButton();
     }
   
     function displaySuccess(success) {
       outputContainer.innerHTML = `<div class="success-message">${success}</div>`;
+      isTransformed = false;
+      updateDeployButton();
     }
+  
+    function displayDeploymentMessage(message) {
+      outputContainer.innerHTML = `<div class="deployment-message">${message}</div>`;
+    }
+  
+    function updateDeployButton() {
+      deployBtn.disabled = !isTransformed;
+    }
+  
+    updateDeployButton();
   });
   

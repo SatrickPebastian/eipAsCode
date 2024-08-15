@@ -1,19 +1,8 @@
 services:
-  testreceiver:
+  taxprocessor:
     environment:
-    - inputPipe=amqp://admin:password@localhost:5672,JOOOO
-    image: pstopper/eicoda-amqp-receiver:latest
+    - taxInput=amqp://admin:password@localhost:5672,TaxQueue
+    image: pstopper/tax-processor:latest
     volumes: []
-  testrouter:
-    environment:
-    - inputPipe=amqp://admin:password@localhost:5672,JOOOO
-    - outputPipeOne=amqp://admin:password@localhost:5672,testOutputOne
-    - outputPipeTwo=amqp://admin:password@localhost:5672,testOutputTwo
-    - routingCriterias=/etc/config/routingCriterias
-    - interval=10
-    image: pstopper/eicoda-configurable-router:latest
-    volumes:
-    - testrouter-routingcriterias:/etc/config/routingCriterias
 version: "3"
-volumes:
-  testrouter-routingcriterias: {}
+volumes: {}

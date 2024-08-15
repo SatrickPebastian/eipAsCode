@@ -20,7 +20,7 @@ func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bo
 
 	for _, filter := range model.Filters {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
-		if host != nil && host.Type == "DockerCompose" {
+		if host != nil && host.Type == "DockerEngine" {
 			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
 			service, serviceVolumes := createDockerComposeService(model, filter, image)
 			serviceName := utils.SanitizeName(filter.Name)

@@ -1,0 +1,10 @@
+{
+  "criterias": [
+    {
+      "condition": "message.data.level === 'error'"
+    },
+    {
+      "condition": "message.data.count === 5"
+    }
+  ]
+}
