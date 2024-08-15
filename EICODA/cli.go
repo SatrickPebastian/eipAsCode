@@ -23,12 +23,13 @@ var deployCmd = &cobra.Command{
 	Long:  `Deploy a configuration using a specified YAML file.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := cmd.Flags().GetString("path")
+		measure, _ := cmd.Flags().GetBool("measure")
 		if path == "" {
 			fmt.Println("Path to the deployment YAML file is required.")
 			return
 		}
 		// Use the ApplicationController to handle the deployment
-		err := appController.Deploy(path)
+		err := appController.Deploy(path, measure)
 		if err != nil {
 			fmt.Printf("Deployment failed: %v\n", err)
 		}
@@ -84,6 +85,7 @@ func init() {
 	// Define flags and configuration settings
 	deployCmd.Flags().StringP("path", "p", "", "Path to the deployment YAML file")
 	deployCmd.MarkFlagRequired("path")
+	deployCmd.Flags().BoolP("measure", "m", false, "Measure the deployment performance")
 
 	addTypeCmd.Flags().StringP("path", "p", "", "Path to the filter type YAML file")
 	addTypeCmd.MarkFlagRequired("path")

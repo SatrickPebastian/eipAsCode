@@ -4,7 +4,9 @@ filterTypes:
     configs:
       - name: data
       - name: interval
+        default: 1
       - name: eventType
+        default: dummy
   - name: Receiver
     artifact: ReceiverArtifact
   - name: Custom

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"eicoda/models"
 	"eicoda/plugins"
@@ -36,7 +37,13 @@ func NewApplicationController() *ApplicationController {
 }
 
 // Deploy handles the deployment process
-func (app *ApplicationController) Deploy(path string) error {
+func (app *ApplicationController) Deploy(path string, measure bool) error {
+	var startTime, parseTransformTime, endTime time.Time
+
+	if measure {
+		startTime = time.Now()
+	}
+
 	fmt.Println("Starting deployment process...")
 	model, err := app.modelParser.Parse(path)
 	if err != nil {
@@ -48,12 +55,25 @@ func (app *ApplicationController) Deploy(path string) error {
 		return err
 	}
 
+	// Erste Zeitmessung nach Parsing und Transformation
+	if measure {
+		parseTransformTime = time.Now()
+		fmt.Printf("TIME TO PARSE AND TRANSFORM: %v\n", parseTransformTime.Sub(startTime))
+	}
+
 	fmt.Println("Executing plugins...")
 	if err := app.executePlugins(model); err != nil {
 		return err
 	}
 
 	fmt.Printf("Successfully transformed and deployed model.")
+  
+	//Zweite Zeitmessung nachdem Deployment komplett durchgelaufen ist
+	if measure {
+		endTime = time.Now()
+		fmt.Printf("OVERALL DEPLOYMENT TIME: %v\n", endTime.Sub(startTime))
+	}
+
 	return nil
 }
 
