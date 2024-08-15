@@ -77,6 +77,29 @@ func (app *ApplicationController) Deploy(path string, measure bool) error {
 	return nil
 }
 
+// Destroy handles the destruction process
+func (app *ApplicationController) Destroy() error {
+	fmt.Println("Starting destruction process...")
+
+	fmt.Println("Destroying Kubernetes resources...")
+	if err := app.plugins["Kubernetes"].Destroy(); err != nil {
+		return fmt.Errorf("failed to destroy Kubernetes resources: %w", err)
+	}
+
+	fmt.Println("Destroying DockerCompose resources...")
+	if err := app.plugins["DockerCompose"].Destroy(); err != nil {
+		return fmt.Errorf("failed to destroy DockerCompose resources: %w", err)
+	}
+
+	fmt.Println("Destroying Terraform resources...")
+	if err := app.plugins["Terraform"].Destroy(); err != nil {
+		return fmt.Errorf("failed to destroy Terraform resources: %w", err)
+	}
+
+	fmt.Println("Successfully destroyed all resources.")
+	return nil
+}
+
 // ProcessModel handles the transformation and returns the transformed models
 func (app *ApplicationController) ProcessModel(content string) ([]string, error) {
 	fmt.Println("Processing model content...")
@@ -188,6 +211,7 @@ func (app *ApplicationController) shouldTransformRabbitMQ(model *models.Model) b
 // Plugin defines the interface for all plugins
 type Plugin interface {
 	Execute() error
+	Destroy() error
 }
 
 // AddType handles adding a new filter type

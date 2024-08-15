@@ -76,11 +76,26 @@ var processCmd = &cobra.Command{
 	},
 }
 
+var destroyCmd = &cobra.Command{
+	Use:   "destroy",
+	Short: "Destroy a deployment",
+	Long:  `Destroy a deployment that was previously created.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		err := appController.Destroy()
+		if err != nil {
+			fmt.Printf("Destroy failed: %v\n", err)
+		} else {
+			fmt.Println("Deployment successfully destroyed.")
+		}
+	},
+}
+
 func init() {
 	appController = NewApplicationController()
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(addTypeCmd)
 	rootCmd.AddCommand(processCmd)
+	rootCmd.AddCommand(destroyCmd)
 
 	// Define flags and configuration settings
 	deployCmd.Flags().StringP("path", "p", "", "Path to the deployment YAML file")
