@@ -4,7 +4,9 @@ filterTypes:
   configs:
   - name: data
   - name: interval
+    default: 1
   - name: eventType
+    default: dummy
 - name: Receiver
   artifact: ReceiverArtifact
 - name: Custom
@@ -51,19 +53,19 @@ filterTypes:
 deploymentArtifacts:
 - name: SenderArtifact
   type: Docker
-  image: eicoda/sender:latest
+  image: pstopper/eicoda-sender:latest
   protocol: ""
   internalPipes:
   - out
 - name: ReceiverArtifact
   type: Docker
-  image: eicoda/receiver:latest
+  image: pstopper/eicoda-receiver:latest
   protocol: ""
   internalPipes:
   - in
 - name: RouterArtifact
   type: Docker
-  image: eicoda/router:latest
+  image: pstopper/eicoda-router:latest
   protocol: ""
   internalPipes:
   - in
@@ -71,28 +73,28 @@ deploymentArtifacts:
   - outTwo
 - name: MessageFilterArtifact
   type: Docker
-  image: eicoda/message-filter:latest
+  image: pstopper/eicoda-message-filter:latest
   protocol: ""
   internalPipes:
   - in
   - out
 - name: ResequencerArtifact
   type: Docker
-  image: eicoda/resequencer:latest
+  image: pstopper/eicoda-resequencer:latest
   protocol: ""
   internalPipes:
   - in
   - out
 - name: MessageTranslatorArtifact
   type: Docker
-  image: eicoda/message-translator:latest
+  image: pstopper/eicoda-message-translator:latest
   protocol: ""
   internalPipes:
   - in
   - out
 - name: ContentFilterArtifact
   type: Docker
-  image: eicoda/content-filter:latest
+  image: pstopper/eicoda-content-filter:latest
   protocol: ""
   internalPipes:
   - in

@@ -1,47 +1,275 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: webshopbackend
+  name: webshopbackend1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: webshopbackend
+      app: webshopbackend1
   template:
     metadata:
       labels:
-        app: webshopbackend
+        app: webshopbackend1
     spec:
       containers:
       - env:
         - name: internalOrdersPipe
           value: amqp://admin:password@rabbitmq:5672,OrderQueue
         image: pstopper/backend-container:latest
-        name: webshopbackend
+        name: webshopbackend1
         volumeMounts: []
       volumes: []
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ordertranslator
+  name: webshopbackend2
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ordertranslator
+      app: webshopbackend2
   template:
     metadata:
       labels:
-        app: ordertranslator
+        app: webshopbackend2
+    spec:
+      containers:
+      - env:
+        - name: internalOrdersPipe
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/backend-container:latest
+        name: webshopbackend2
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webshopbackend3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webshopbackend3
+  template:
+    metadata:
+      labels:
+        app: webshopbackend3
+    spec:
+      containers:
+      - env:
+        - name: internalOrdersPipe
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/backend-container:latest
+        name: webshopbackend3
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webshopbackend4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webshopbackend4
+  template:
+    metadata:
+      labels:
+        app: webshopbackend4
+    spec:
+      containers:
+      - env:
+        - name: internalOrdersPipe
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/backend-container:latest
+        name: webshopbackend4
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webshopbackend5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webshopbackend5
+  template:
+    metadata:
+      labels:
+        app: webshopbackend5
+    spec:
+      containers:
+      - env:
+        - name: internalOrdersPipe
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/backend-container:latest
+        name: webshopbackend5
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webshopbackend6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webshopbackend6
+  template:
+    metadata:
+      labels:
+        app: webshopbackend6
+    spec:
+      containers:
+      - env:
+        - name: internalOrdersPipe
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/backend-container:latest
+        name: webshopbackend6
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordertranslator1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordertranslator1
+  template:
+    metadata:
+      labels:
+        app: ordertranslator1
     spec:
       containers:
       - env:
         - name: in
           value: amqp://admin:password@rabbitmq:5672,OrderQueue
-        - name: out
-          value: amqp://admin:password@rabbitmq:5672,TaxQueue
-        image: eicoda/message-translator:latest
-        name: ordertranslator
+        image: pstopper/eicoda-message-translator:latest
+        name: ordertranslator1
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordertranslator2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordertranslator2
+  template:
+    metadata:
+      labels:
+        app: ordertranslator2
+    spec:
+      containers:
+      - env:
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/eicoda-message-translator:latest
+        name: ordertranslator2
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordertranslator3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordertranslator3
+  template:
+    metadata:
+      labels:
+        app: ordertranslator3
+    spec:
+      containers:
+      - env:
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/eicoda-message-translator:latest
+        name: ordertranslator3
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordertranslator4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordertranslator4
+  template:
+    metadata:
+      labels:
+        app: ordertranslator4
+    spec:
+      containers:
+      - env:
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/eicoda-message-translator:latest
+        name: ordertranslator4
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordertranslator5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordertranslator5
+  template:
+    metadata:
+      labels:
+        app: ordertranslator5
+    spec:
+      containers:
+      - env:
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/eicoda-message-translator:latest
+        name: ordertranslator5
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordertranslator6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordertranslator6
+  template:
+    metadata:
+      labels:
+        app: ordertranslator6
+    spec:
+      containers:
+      - env:
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,OrderQueue
+        image: pstopper/eicoda-message-translator:latest
+        name: ordertranslator6
         volumeMounts: []
       volumes: []

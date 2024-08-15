@@ -1,0 +1,19 @@
+pipes:
+  queues:
+    - id: 3b76043e
+      name: "OrderQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+filters:
+- id: 577a26d2
+  name: "WebShopBackend"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+- id: e4a4a657
+  name: "OrderProcessor"
+  host: "devDockerCompose"
+  type: "Receiver"
+  mappings:
+    - "in:OrderQueue"

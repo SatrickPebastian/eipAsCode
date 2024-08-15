@@ -1,0 +1,55 @@
+pipes:
+  queues:
+    - id: 3b76043e
+      name: "OrderQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 0910a8c3
+      name: "TaxQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+filters:
+- id: 577a26d2
+  name: "WebShopBackend1"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+- id: 577a26d
+  name: "WebShopBackend2"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+
+- id: 675071fa
+  name: "OrderTranslator1"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:OrderQueue"
+    - "out:TaxQueue"
+- id: 675071f
+  name: "OrderTranslator2"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:OrderQueue"
+    - "out:TaxQueue"
+
+- id: e4a4a657
+  name: "TaxProcessor1"
+  host: "devDockerCompose"
+  type: "Custom"
+  artifact: "TaxProcessorArtifact"
+  mappings:
+    - "taxInput:TaxQueue"
+- id: e4a4a65
+  name: "TaxProcessor2"
+  host: "devDockerCompose"
+  type: "Custom"
+  artifact: "TaxProcessorArtifact"
+  mappings:
+    - "taxInput:TaxQueue"

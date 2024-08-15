@@ -1,0 +1,44 @@
+pipes:
+  queues:
+    - id: 3b76043e
+      name: "OrderQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+filters:
+- id: 577a26d2
+  name: "WebShopBackend1"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+- id: 577a26d
+  name: "WebShopBackend2"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+- id: 577a26
+  name: "WebShopBackend3"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+
+- id: e4a4a657
+  name: "OrderProcessor1"
+  host: "devDockerCompose"
+  type: "Receiver"
+  mappings:
+    - "in:OrderQueue"
+- id: e4a4a65
+  name: "OrderProcessor2"
+  host: "devDockerCompose"
+  type: "Receiver"
+  mappings:
+    - "in:OrderQueue"
+- id: e4a4a6
+  name: "OrderProcessor3"
+  host: "devDockerCompose"
+  type: "Receiver"
+  mappings:
+    - "in:OrderQueue"
