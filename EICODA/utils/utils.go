@@ -46,6 +46,16 @@ func FindQueueByName(queues []models.Queue, name string) *models.Queue {
 	return nil
 }
 
+// FindTopicByName finds a topic by its name
+func FindTopicByName(topics []models.Topic, name string) *models.Topic {
+	for _, topic := range topics {
+		if topic.Name == name {
+			return &topic
+		}
+	}
+	return nil
+}
+
 // FindFilterTypeByName finds a filter type by its name
 func FindFilterTypeByName(filterTypes []models.FilterType, name string) *models.FilterType {
 	for _, filterType := range filterTypes {

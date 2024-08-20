@@ -1,9 +1,5 @@
 pipes:
   queues:
-    - id: 3b76043e-676b-4029-9008-b0215cec8e1d
-      name: "worldPipe"
-      host: "devRabbitMQ"
-      protocol: "amqp"
     - id: 3b76043e-676b-4029-9008-b0215cec
       name: "reutlingenPipe"
       host: "devRabbitMQ"
@@ -12,11 +8,16 @@ pipes:
       name: "messagePipe"
       host: "devRabbitMQ"
       protocol: "amqp"
+  topics:
+    - id: 3b76043e-676b-4029-9008-b0215cec8e1d
+      name: "worldPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
 
 filters:
   - id: 577a26d2-216
     name: "worldSender"
-    host: "devKubernetes"
+    host: "devDockerCompose"
     type: "Sender"
     data: '{"greeting": "Hallo Welt"}'
     mappings:
@@ -30,7 +31,7 @@ filters:
       - "out:messagePipe"
   - id: 577a26d2-216c-4e6e-95e0-e7
     name: "testRouter"
-    host: "devKubernetes"
+    host: "devDockerCompose"
     type: "FlexRouter"
     criteria: "criteria.json"
     mode: "test"

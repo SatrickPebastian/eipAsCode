@@ -3,6 +3,7 @@ package transformators
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"eicoda/models"
@@ -22,7 +23,7 @@ func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bo
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "DockerEngine" {
 			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
-			service, serviceVolumes := createDockerComposeService(model, filter, image)
+			service, serviceVolumes := createDockerComposeService(model, filter, image, baseDir)
 			serviceName := utils.SanitizeName(filter.Name)
 			services[serviceName] = service
 			for _, volume := range serviceVolumes {
@@ -47,7 +48,7 @@ func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bo
 
 	// Write to file if writeFile is true
 	if writeFile {
-		outputPath := "docker-compose.yaml"
+		outputPath := "docker-compose.yaml" // Write to the root folder
 		err := os.WriteFile(outputPath, []byte(sb.String()), 0644)
 		if err != nil {
 			return "", fmt.Errorf("failed to write Docker Compose model to file: %w", err)
@@ -57,7 +58,7 @@ func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bo
 	return sb.String(), nil
 }
 
-func createDockerComposeService(model *models.Model, filter models.Filter, image string) (map[string]interface{}, []string) {
+func createDockerComposeService(model *models.Model, filter models.Filter, image string, baseDir string) (map[string]interface{}, []string) {
 	envVars := []string{}
 	volumes := []string{}
 	volumeMounts := []string{}
@@ -66,20 +67,37 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 		parts := strings.Split(mapping, ":")
 		if len(parts) == 2 {
 			pipeName := parts[1]
-			pipe := utils.FindQueueByName(model.Pipes.Queues, pipeName)
-			if pipe != nil {
-				pipeHost := utils.FindHostByName(model.Hosts.PipeHosts, pipe.Host)
-				if pipeHost != nil {
-					value := fmt.Sprintf("%s://%s:%s@%s:%s,%s",
-						pipe.Protocol,
-						pipeHost.AdditionalProps["username"],
-						pipeHost.AdditionalProps["password"],
-						pipeHost.AdditionalProps["host_address"],
-						pipeHost.AdditionalProps["messaging_port"],
-						pipe.Name, // add the pipe name at the end
-					)
-					envVars = append(envVars, fmt.Sprintf("%s=%s", parts[0], value))
+			var pipeType string
+			var pipeHost *models.Host
+			var pipeProtocol string
+
+			// Check if it's a queue
+			queue := utils.FindQueueByName(model.Pipes.Queues, pipeName)
+			if queue != nil {
+				pipeType = "queue"
+				pipeHost = utils.FindHostByName(model.Hosts.PipeHosts, queue.Host)
+				pipeProtocol = queue.Protocol
+			} else {
+				// If not a queue, it must be a topic
+				topic := utils.FindTopicByName(model.Pipes.Topics, pipeName)
+				if topic != nil {
+					pipeType = "topic"
+					pipeHost = utils.FindHostByName(model.Hosts.PipeHosts, topic.Host)
+					pipeProtocol = topic.Protocol
 				}
+			}
+
+			if pipeHost != nil {
+				value := fmt.Sprintf("%s://%s:%s@%s:%s,%s,%s",
+					pipeProtocol,
+					pipeHost.AdditionalProps["username"],
+					pipeHost.AdditionalProps["password"],
+					pipeHost.AdditionalProps["host_address"],
+					pipeHost.AdditionalProps["messaging_port"],
+					pipeName,   // add the pipe name
+					pipeType,   // add the pipe type (queue or topic)
+				)
+				envVars = append(envVars, fmt.Sprintf("%s=%s", parts[0], value))
 			}
 		}
 	}
@@ -93,13 +111,20 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 				value = fmt.Sprintf("%v", config.Default)
 			}
 			if config.File {
-				// Handle file-based config
+				// Handle file-based config by finding the absolute path
+				filePath := filepath.Join(baseDir, value)
+				absoluteFilePath, err := filepath.Abs(filePath)
+				if err != nil {
+					fmt.Printf("failed to get absolute path for %s: %v\n", filePath, err)
+					continue
+				}
+
 				volumeName := strings.ToLower(filter.Name + "-" + config.Name)
 				volumes = append(volumes, volumeName)
-				volumeMounts = append(volumeMounts, fmt.Sprintf("%s:/etc/config/%s", volumeName, config.Name))
+				volumeMounts = append(volumeMounts, fmt.Sprintf("%s:/etc/config/criteria", absoluteFilePath))
 
 				// Update the value to point to the new mount path
-				value = fmt.Sprintf("/etc/config/%s", config.Name)
+				value = "/etc/config/criteria"
 			}
 
 			envVars = append(envVars, fmt.Sprintf("%s=%s", config.Name, utils.ConvertToProperType(value)))

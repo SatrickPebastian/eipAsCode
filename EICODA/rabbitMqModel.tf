@@ -14,16 +14,6 @@ provider "rabbitmq" {
   password  = "password"
 }
 
-resource "rabbitmq_queue" "worldPipe" {
-  name      = "worldPipe"
-  vhost     = "/"
-  settings {
-    durable    = true
-    auto_delete = false
-  }
-}
-
-
 resource "rabbitmq_queue" "reutlingenPipe" {
   name      = "reutlingenPipe"
   vhost     = "/"
@@ -39,6 +29,17 @@ resource "rabbitmq_queue" "messagePipe" {
   vhost     = "/"
   settings {
     durable    = true
+    auto_delete = false
+  }
+}
+
+
+resource "rabbitmq_exchange" "worldPipe" {
+  name  = "worldPipe"
+  vhost = "/"
+  settings {
+    type        = "topic"
+    durable     = true
     auto_delete = false
   }
 }

@@ -65,23 +65,40 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 		parts := strings.Split(mapping, ":")
 		if len(parts) == 2 {
 			pipeName := parts[1]
-			pipe := utils.FindQueueByName(model.Pipes.Queues, pipeName)
-			if pipe != nil {
-				pipeHost := utils.FindHostByName(model.Hosts.PipeHosts, pipe.Host)
-				if pipeHost != nil {
-					value := fmt.Sprintf("%s://%s:%s@%s:%s,%s",
-						pipe.Protocol,
-						pipeHost.AdditionalProps["username"],
-						pipeHost.AdditionalProps["password"],
-						strings.ToLower(pipeHost.Type), // using the lowercase type name of the pipeHost
-						pipeHost.AdditionalProps["messaging_port"],
-						pipe.Name, // add the pipe name at the end
-					)
-					envVars = append(envVars, map[string]interface{}{
-						"name":  parts[0],
-						"value": value,
-					})
+			var pipeType string
+			var pipeHost *models.Host
+			var pipeProtocol string
+
+			// Check if it's a queue
+			queue := utils.FindQueueByName(model.Pipes.Queues, pipeName)
+			if queue != nil {
+				pipeType = "queue"
+				pipeHost = utils.FindHostByName(model.Hosts.PipeHosts, queue.Host)
+				pipeProtocol = queue.Protocol
+			} else {
+				// If not a queue, it must be a topic
+				topic := utils.FindTopicByName(model.Pipes.Topics, pipeName)
+				if topic != nil {
+					pipeType = "topic"
+					pipeHost = utils.FindHostByName(model.Hosts.PipeHosts, topic.Host)
+					pipeProtocol = topic.Protocol
 				}
+			}
+
+			if pipeHost != nil {
+				value := fmt.Sprintf("%s://%s:%s@%s:%s,%s,%s",
+					pipeProtocol,
+					pipeHost.AdditionalProps["username"],
+					pipeHost.AdditionalProps["password"],
+					strings.ToLower(pipeHost.Type),
+					pipeHost.AdditionalProps["messaging_port"],
+					pipeName,   // add the pipe name
+					pipeType,   // add the pipe type (queue or topic)
+				)
+				envVars = append(envVars, map[string]interface{}{
+					"name":  parts[0],
+					"value": value,
+				})
 			}
 		}
 	}

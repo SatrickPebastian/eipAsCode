@@ -4,7 +4,7 @@ filterTypes:
   configs:
   - name: data
   - name: interval
-    default: 1
+    default: 3000
   - name: eventType
     default: dummy
 - name: Receiver

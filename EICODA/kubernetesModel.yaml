@@ -1,35 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: worldsender
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: worldsender
-  template:
-    metadata:
-      labels:
-        app: worldsender
-    spec:
-      containers:
-      - env:
-        - name: out
-          value: amqp://admin:password@rabbitmq:5672,messagePipe
-        - name: data
-          value: '{"greeting": "Hello World"}'
-        - name: interval
-          value: "1"
-        - name: eventType
-          value: dummy
-        image: pstopper/eicoda-sender:latest
-        name: worldsender
-        volumeMounts: []
-      volumes: []
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: nehrensender
 spec:
   replicas: 1
@@ -44,62 +15,17 @@ spec:
       containers:
       - env:
         - name: out
-          value: amqp://admin:password@rabbitmq:5672,messagePipe
+          value: amqp://admin:password@rabbitmq:5672,messagePipe,queue
         - name: data
-          value: '{"greeting": "Hello Nehren"}'
+          value: '{"greeting": "Hallo Reutlingen"}'
         - name: interval
-          value: "1"
+          value: "3000"
         - name: eventType
           value: dummy
         image: pstopper/eicoda-sender:latest
         name: nehrensender
         volumeMounts: []
       volumes: []
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: testrouter
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: testrouter
-  template:
-    metadata:
-      labels:
-        app: testrouter
-    spec:
-      containers:
-      - env:
-        - name: in
-          value: amqp://admin:password@rabbitmq:5672,messagePipe
-        - name: outOne
-          value: amqp://admin:password@rabbitmq:5672,reutlingenPipe
-        - name: outTwo
-          value: amqp://admin:password@rabbitmq:5672,worldPipe
-        - name: mode
-          value: test
-        image: pstopper/eicoda-flexrouter:latest
-        name: testrouter
-        volumeMounts:
-        - mountPath: /etc/config/criteria
-          name: testrouter-criteria
-          subPath: criteria
-      volumes:
-      - configMap:
-          name: testrouter-criteria
-        name: testrouter-criteria
----
-apiVersion: v1
-data:
-  criteria: "{\r\n  \"criterias\": [\r\n    {\r\n      \"condition\": \"message.data.greeting
-    === 'Hello World'\",\r\n      \"destination\": \"worldPipe\"\r\n    },\r\n    {\r\n
-    \     \"condition\": \"message.data.greeting === 'Hello Reutlingen'\",\r\n      \"destination\":
-    \"reutlingenPipe\"\r\n    }\r\n  ],\r\n  \"default\": \"reutlingenPipe\"\r\n}\r\n"
-kind: ConfigMap
-metadata:
-  name: testrouter-criteria
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -118,7 +44,7 @@ spec:
       containers:
       - env:
         - name: in
-          value: amqp://admin:password@rabbitmq:5672,reutlingenPipe
+          value: amqp://admin:password@rabbitmq:5672,reutlingenPipe,queue
         image: pstopper/eicoda-receiver:latest
         name: reutlingenreceiver
         volumeMounts: []
@@ -141,7 +67,7 @@ spec:
       containers:
       - env:
         - name: in
-          value: amqp://admin:password@rabbitmq:5672,worldPipe
+          value: amqp://admin:password@rabbitmq:5672,worldPipe,topic
         image: pstopper/eicoda-receiver:latest
         name: worldreceiver
         volumeMounts: []
