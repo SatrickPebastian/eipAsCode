@@ -14,7 +14,7 @@ import (
 type DockerComposeTransformator struct{}
 
 // Transform transforms the model to Docker Compose format and optionally writes to a file
-func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bool) (string, error) {
+func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bool, baseDir string) (string, error) {
 	services := make(map[string]interface{})
 	volumes := map[string]interface{}{}
 

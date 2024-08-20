@@ -1,9 +1,13 @@
 {
   "criterias": [
     {
-      "condition": "message.data.level === 'error'",
-      "destination": "outTwo"
+      "condition": "message.data.greeting === 'Hello World'",
+      "destination": "worldPipe"
+    },
+    {
+      "condition": "message.data.greeting === 'Hello Reutlingen'",
+      "destination": "reutlingenPipe"
     }
   ],
-  "default": "outOne"
+  "default": "reutlingenPipe"
 }

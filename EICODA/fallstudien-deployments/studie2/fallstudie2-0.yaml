@@ -13,20 +13,16 @@ filters:
   name: "WebShopBackend"
   host: "devKubernetes"
   type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  mappings: ["internalOrdersPipe:OrderQueue"]
 - id: 675071fa
   name: "OrderTranslator"
   host: "devKubernetes"
   type: "MessageTranslator"
-  criteria: "bla"
-  mappings:
-    - "in:OrderQueue"
-    - "out:TaxQueue"
+  criteria: "translation.json"
+  mappings: ["in:OrderQueue", "out:TaxQueue"]
 - id: e4a4a657
   name: "TaxProcessor"
   host: "devDockerCompose"
   type: "Custom"
   artifact: "TaxProcessorArtifact"
-  mappings:
-    - "taxInput:TaxQueue"
+  mappings: ["taxInput:TaxQueue"]

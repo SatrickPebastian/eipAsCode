@@ -9,7 +9,7 @@ pipes:
       host: "devRabbitMQ"
       protocol: "amqp"
     - id: 0910a8c
-      name: "ResultsQueue"
+      name: "ResultQueue"
       host: "devRabbitMQ"
       protocol: "amqp"
   topics:
@@ -22,41 +22,28 @@ filters:
   name: "WebShopBackend"
   host: "devKubernetes"
   type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
-
+  mappings: ["internalOrdersPipe:OrderQueue"]
 - id: 675071fa
   name: "OrderTranslator"
   host: "devKubernetes"
   type: "MessageTranslator"
-  criteria: "bla"
-  mappings:
-    - "in:OrderQueue"
-    - "out:TranslatedTopic"
-
+  criteria: "translation.json"
+  mappings: ["in:OrderQueue", "out:TranslatedTopic"]
 - id: e4a4a657
   name: "InvoiceRequestorA"
-  host: "devDockerCompose"
+  host: "devKubernetes"
   type: "MessageTranslator"
   criteria: "bla"
-  mappings:
-    - "in:TranslatedTopic"
-    - "out:InvoiceQueue"
-
+  mappings: ["in:TranslatedTopic", "out:InvoiceQueue"]
 - id: e4a4sadaf
   name: "InvoiceRequestorB"
-  host: "devDockerCompose"
+  host: "devKubernetes"
   type: "MessageTranslator"
   criteria: "bla"
-  mappings:
-    - "in:TranslatedTopic"
-    - "out:InvoiceQueue"
-
+  mappings: ["in:TranslatedTopic", "out:InvoiceQueue"]
 - id: e4a4a6yxg
   name: "InvoiceAggregator"
   host: "devDockerCompose"
   type: "MessageTranslator"
-  criteria: "bla"
-  mappings:
-    - "in:InvoiceQueue"
-    - "out:ResultsQueue"
+  criteria: "routing.json"
+  mappings: ["in:InvoiceQueue", "out:ResultQueue"]

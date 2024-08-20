@@ -14,8 +14,8 @@ provider "rabbitmq" {
   password  = "password"
 }
 
-resource "rabbitmq_queue" "OrderQueue" {
-  name      = "OrderQueue"
+resource "rabbitmq_queue" "worldPipe" {
+  name      = "worldPipe"
   vhost     = "/"
   settings {
     durable    = true
@@ -24,8 +24,8 @@ resource "rabbitmq_queue" "OrderQueue" {
 }
 
 
-resource "rabbitmq_queue" "InvoiceQueue" {
-  name      = "InvoiceQueue"
+resource "rabbitmq_queue" "reutlingenPipe" {
+  name      = "reutlingenPipe"
   vhost     = "/"
   settings {
     durable    = true
@@ -34,22 +34,11 @@ resource "rabbitmq_queue" "InvoiceQueue" {
 }
 
 
-resource "rabbitmq_queue" "ResultsQueue" {
-  name      = "ResultsQueue"
+resource "rabbitmq_queue" "messagePipe" {
+  name      = "messagePipe"
   vhost     = "/"
   settings {
     durable    = true
-    auto_delete = false
-  }
-}
-
-
-resource "rabbitmq_exchange" "TranslatedTopic" {
-  name  = "TranslatedTopic"
-  vhost = "/"
-  settings {
-    type        = "topic"
-    durable     = true
     auto_delete = false
   }
 }

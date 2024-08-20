@@ -10,8 +10,8 @@ filterTypes:
 - name: Receiver
   artifact: ReceiverArtifact
 - name: Custom
-- name: Router
-  artifact: RouterArtifact
+- name: FlexRouter
+  artifact: FlexRouterArtifact
   configs:
   - name: criteria
     file: true
@@ -63,9 +63,9 @@ deploymentArtifacts:
   protocol: ""
   internalPipes:
   - in
-- name: RouterArtifact
+- name: FlexRouterArtifact
   type: Docker
-  image: pstopper/eicoda-router:latest
+  image: pstopper/eicoda-flexrouter:latest
   protocol: ""
   internalPipes:
   - in

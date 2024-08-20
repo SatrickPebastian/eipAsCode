@@ -15,14 +15,14 @@ import (
 type KubernetesTransformator struct{}
 
 // Transform transforms the model to Kubernetes format and optionally writes to a file
-func (t *KubernetesTransformator) Transform(model *models.Model, writeFile bool) (string, error) {
+func (t *KubernetesTransformator) Transform(model *models.Model, writeFile bool, baseDir string) (string, error) {
 	var resources []interface{}
 
 	for _, filter := range model.Filters {
 		host := utils.FindHostByName(model.Hosts.FilterHosts, filter.Host)
 		if host != nil && host.Type == "Kubernetes" {
 			image := utils.FindArtifactImage(model.DeploymentArtifacts, filter.Artifact)
-			deployment, configMap := createKubernetesDeployment(model, filter, image)
+			deployment, configMap := createKubernetesDeployment(model, filter, image, baseDir)
 			resources = append(resources, deployment)
 			if configMap != nil {
 				resources = append(resources, configMap)
@@ -55,7 +55,7 @@ func (t *KubernetesTransformator) Transform(model *models.Model, writeFile bool)
 	return sb.String(), nil
 }
 
-func createKubernetesDeployment(model *models.Model, filter models.Filter, image string) (map[string]interface{}, map[string]interface{}) {
+func createKubernetesDeployment(model *models.Model, filter models.Filter, image string, baseDir string) (map[string]interface{}, map[string]interface{}) {
 	name := utils.SanitizeName(filter.Name)
 	envVars := []map[string]interface{}{}
 	volumeMounts := []map[string]interface{}{}
@@ -96,13 +96,13 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 				value = fmt.Sprintf("%v", config.Default)
 			}
 			if config.File {
-				// Handle file-based config
-				filePath := value
-				fileContent, err := os.ReadFile(filepath.Join(".", filePath))
-				if err != nil {
-					fmt.Printf("failed to read file %s: %v", filePath, err)
-					continue
-				}
+                // Handle file-based config
+                filePath := filepath.Join(baseDir, value)
+                fileContent, err := os.ReadFile(filePath)
+                if err != nil {
+                    fmt.Printf("failed to read file %s: %v", filePath, err)
+                    continue
+                }
 
 				configMapName := strings.ToLower(name + "-" + config.Name)
 				configMap = map[string]interface{}{

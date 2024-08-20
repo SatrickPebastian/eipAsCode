@@ -1,0 +1,11 @@
+{
+    "specversion": "message.specversion",
+    "type": "message.type",
+    "source": "message.source",
+    "id": "message.id",
+    "time": "message.time",
+    "data": {
+        "taxes": "message.data.price * 0.19",
+        "averageRatings": "$average(message.data.ratings)"
+    }
+}

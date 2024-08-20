@@ -1,0 +1,53 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec8e1d
+      name: "worldPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec
+      name: "reutlingenPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec8e
+      name: "messagePipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 577a26d2-216
+    name: "worldSender"
+    host: "devKubernetes"
+    type: "Sender"
+    data: '{"greeting": "Hello World"}'
+    mappings:
+      - "out:messagePipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f8394
+    name: "nehrenSender"
+    host: "devKubernetes"
+    type: "Sender"
+    data: '{"greeting": "Hello Reutlingen"}'
+    mappings:
+      - "out:messagePipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7
+    name: "testRouter"
+    host: "devKubernetes"
+    type: "FlexRouter"
+    criteria: "criteria.json"
+    mode: "test"
+    mappings:
+      - "in:messagePipe"
+      - "outOne:reutlingenPipe"
+      - "outTwo:worldPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f83
+    name: "reutlingenReceiver"
+    host: "devKubernetes"
+    type: "Receiver"
+    mappings:
+      - "in:reutlingenPipe"
+  - id: 577a26d2-216c-4e6e-9
+    name: "worldReceiver"
+    host: "devKubernetes"
+    type: "Receiver"
+    mappings:
+      - "in:worldPipe"
+    

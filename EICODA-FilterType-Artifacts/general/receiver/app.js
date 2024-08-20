@@ -3,7 +3,7 @@ const process = require('process');
 
 // Load environment variables
 
-const [queueAddress, queue] = process.env.taxInput.split(',');
+const [queueAddress, queue] = process.env.in.split(',');
 console.log("queueAddress:"+queueAddress)
 console.log("queueName:"+queue)
 

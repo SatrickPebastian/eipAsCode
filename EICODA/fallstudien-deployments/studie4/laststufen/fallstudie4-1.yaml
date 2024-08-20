@@ -1,0 +1,100 @@
+pipes:
+  queues:
+    - id: 3b76043e
+      name: "OrderQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 0910a8c3
+      name: "InvoiceQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 0910a8c
+      name: "ResultQueue"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+  topics:
+    - id: 3b7604
+      name: "TranslatedTopic"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+filters:
+- id: 577a26d2
+  name: "WebShopBackend1"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+- id: 577a26d
+  name: "WebShopBackend2"
+  host: "devKubernetes"
+  type: "Backend"
+  mappings:
+    - "internalOrdersPipe:OrderQueue"
+
+- id: 675071fa
+  name: "OrderTranslator1"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:OrderQueue"
+    - "out:TranslatedTopic"
+- id: 675071f
+  name: "OrderTranslator2"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:OrderQueue"
+    - "out:TranslatedTopic"
+
+- id: e4a4a657
+  name: "InvoiceRequestorA1"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:TranslatedTopic"
+    - "out:InvoiceQueue"
+- id: e4a4a65
+  name: "InvoiceRequestorA2"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:TranslatedTopic"
+    - "out:InvoiceQueue"
+
+- id: e4a4sadaf
+  name: "InvoiceRequestorB1"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:TranslatedTopic"
+    - "out:InvoiceQueue"
+- id: e4a4sada
+  name: "InvoiceRequestorB2"
+  host: "devKubernetes"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:TranslatedTopic"
+    - "out:InvoiceQueue"
+
+- id: e4a4a6yxg
+  name: "InvoiceAggregator1"
+  host: "devDockerCompose"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:InvoiceQueue"
+    - "out:ResultQueue"
+- id: e4a4a6yx
+  name: "InvoiceAggregator2"
+  host: "devDockerCompose"
+  type: "MessageTranslator"
+  criteria: "bla"
+  mappings:
+    - "in:InvoiceQueue"
+    - "out:ResultQueue"

@@ -2,16 +2,18 @@ const amqp = require('amqplib/callback_api');
 const fs = require('fs');
 const path = require('path');
 
-// Load environment variables
-const inputPipe = process.env.in;
-const [pipeAddressOne, pipeOne] = process.env.outOne.split(',');
-const [pipeAddressTwo, pipeTwo] = process.env.outTwo.split(',');
+// Load env variables
+const [pipeAddressIn, inPipe] = process.env.in.split(',');
+
+// Determines if the flex router should behave like a content-based router or a recipient list
 const mode = process.env.mode;
-const criteriaPath = process.env.criteria;
+
+// Criterias do implicitly determine mapping of output pipes
+const criteriaPath = '/etc/config/criteria'
 const routingLogic = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
 
 // Connect to the input AMQP queue
-amqp.connect(inputPipe, function(error0, connection) {
+amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
     throw error0;
   }
@@ -20,37 +22,15 @@ amqp.connect(inputPipe, function(error0, connection) {
       throw error1;
     }
 
-    const queue = 'input';
+    console.log("Waiting for messages in %s. To exit press CTRL+C", inPipe);
 
-    channel.assertQueue(queue, {
-      durable: true
-    });
-
-    console.log("Waiting for messages in %s. To exit press CTRL+C", queue);
-
-    channel.consume(queue, function(msg) {
+    channel.consume(inPipe, function(msg) {
       const message = JSON.parse(msg.content.toString());
+      //Determine where to route the message based on routing criterias
       const routingKey = routeMessage(message);
 
-      const outputQueues = [pipeAddressOne, pipeAddressTwo];
-      outputQueues.forEach(outputQueue => {
-        amqp.connect(outputQueue, function(error2, connection2) {
-          if (error2) {
-            throw error2;
-          }
-          connection2.createChannel(function(error3, channel2) {
-            if (error3) {
-              throw error3;
-            }
-            channel2.assertQueue(routingKey, {
-              durable: true
-            });
-            channel2.sendToQueue(routingKey, Buffer.from(JSON.stringify(message)));
-            console.log("Sent message to %s: %s", routingKey, JSON.stringify(message));
-          });
-        });
-      });
-
+      channel.sendToQueue(routingKey, Buffer.from(JSON.stringify(message)));
+      console.log("Sent message to %s: %s", routingKey, JSON.stringify(message));
       channel.ack(msg);
     }, {
       noAck: false
@@ -58,12 +38,11 @@ amqp.connect(inputPipe, function(error0, connection) {
   });
 });
 
-// Route message based on JSON logic
 function routeMessage(message) {
-  for (const rule of routingLogic.rules) {
+  for (const rule of routingLogic.criterias) {
     if (eval(rule.condition)) {
-      return rule.outputPipe;
+      return rule.destination;
     }
   }
-  return routingLogic.defaultOutputPipe;
+  return routingLogic.default;
 }

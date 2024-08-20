@@ -9,11 +9,9 @@ filters:
   name: "WebShopBackend"
   host: "devKubernetes"
   type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  mappings: ["internalOrdersPipe:OrderQueue"]
 - id: e4a4a657
   name: "OrderProcessor"
-  host: "devDockerCompose"
+  host: "devKubernetes"
   type: "Receiver"
-  mappings:
-    - "in:OrderQueue"
+  mappings: ["in:OrderQueue"]

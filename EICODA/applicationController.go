@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"path/filepath"
 
 	"eicoda/models"
 	"eicoda/plugins"
@@ -50,8 +51,11 @@ func (app *ApplicationController) Deploy(path string, measure bool) error {
 		return fmt.Errorf("failed to parse model: %w", err)
 	}
 
+	// Pfad von deployment file ausgeben um Pfad an Transformatoren übergeben, sodass diese im gleichen File nach criteria-files suchen können
+	baseDir := filepath.Dir(path)
+
 	fmt.Println("Transforming model...")
-	if err := app.transformModel(model); err != nil {
+	if err := app.transformModel(model, baseDir); err != nil {
 		return err
 	}
 
@@ -110,9 +114,12 @@ func (app *ApplicationController) ProcessModel(content string) ([]string, error)
 
 	var results []string
 
+	// Pfad von deployment file ausgeben um Pfad an Transformatoren übergeben, sodass diese im gleichen File nach criteria-files suchen können
+	baseDir := filepath.Dir(".")
+
 	fmt.Println("Transforming model with appropriate transformators...")
 	for name, transformator := range app.transformators {
-		transformedModel, err := transformator.Transform(model, false)
+		transformedModel, err := transformator.Transform(model, false, baseDir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to transform model with %s: %w", name, err)
 		}
@@ -122,25 +129,25 @@ func (app *ApplicationController) ProcessModel(content string) ([]string, error)
 	return results, nil
 }
 
-func (app *ApplicationController) transformModel(model *models.Model) error {
+func (app *ApplicationController) transformModel(model *models.Model, baseDir string) error {
 	fmt.Println("Checking if transformation for DockerCompose is needed...")
 	if app.shouldTransformDockerCompose(model) {
 		fmt.Println("Transforming model for DockerCompose...")
-		if _, err := app.transformators["DockerCompose"].Transform(model, true); err != nil {
+		if _, err := app.transformators["DockerCompose"].Transform(model, true, baseDir); err != nil {
 			return fmt.Errorf("failed to transform model with DockerCompose: %w", err)
 		}
 	}
 	fmt.Println("Checking if transformation for Kubernetes is needed...")
 	if app.shouldTransformKubernetes(model) {
 		fmt.Println("Transforming model for Kubernetes...")
-		if _, err := app.transformators["Kubernetes"].Transform(model, true); err != nil {
+		if _, err := app.transformators["Kubernetes"].Transform(model, true, baseDir); err != nil {
 			return fmt.Errorf("failed to transform model with Kubernetes: %w", err)
 		}
 	}
 	fmt.Println("Checking if transformation for RabbitMQ is needed...")
 	if app.shouldTransformRabbitMQ(model) {
 		fmt.Println("Transforming model for RabbitMQ...")
-		if _, err := app.transformators["RabbitMQ"].Transform(model, true); err != nil {
+		if _, err := app.transformators["RabbitMQ"].Transform(model, true, baseDir); err != nil {
 			return fmt.Errorf("failed to transform model with RabbitMQ: %w", err)
 		}
 	}

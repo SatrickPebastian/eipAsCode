@@ -13,7 +13,7 @@ import (
 type RabbitMqTransformator struct{}
 
 // Transform transforms the model to Terraform format for RabbitMQ and optionally writes to a file
-func (t *RabbitMqTransformator) Transform(model *models.Model, writeFile bool) (string, error) {
+func (t *RabbitMqTransformator) Transform(model *models.Model, writeFile bool, baseDir string) (string, error) {
 	terraformResources := `
 terraform {
   required_providers {
