@@ -5,7 +5,9 @@ const fs = require('fs');
 const [pipeAddressIn, inPipe, pipeTypeIn] = process.env.in.split(',');
 const [pipeAddressOutOne, outOnePipe, pipeTypeOutOne] = process.env.outOne.split(',');
 const [pipeAddressOutTwo, outTwoPipe, pipeTypeOutTwo] = process.env.outTwo.split(',');
-const topicKey = process.env.topicKey;
+const inRoutingKey = process.env.inRoutingKey || '#';
+const outOneRoutingKey = process.env.outOneRoutingKey || '';
+const outTwoRoutingKey = process.env.outTwoRoutingKey || '';
 
 // Determines if the router should process messages as content-based router ('single') or recipient list ('multiple')
 const mode = process.env.mode;
@@ -25,7 +27,7 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
     }
 
     // Setup the input pipe (queue or topic)
-    setupInputPipe(channel, inPipe, pipeTypeIn, function(inputQueue) {
+    setupInputPipe(channel, inPipe, pipeTypeIn, inRoutingKey, function(inputQueue) {
       // Setup the output pipes (queues or topics)
       setupOutputPipe(channel, outOnePipe, pipeTypeOutOne);
       setupOutputPipe(channel, outTwoPipe, pipeTypeOutTwo);
@@ -67,7 +69,7 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
   });
 });
 
-function setupInputPipe(channel, inPipe, pipeTypeIn, callback) {
+function setupInputPipe(channel, inPipe, pipeTypeIn, routingKey, callback) {
   if (pipeTypeIn === 'queue') {
     channel.assertQueue(inPipe);
     callback(inPipe);
@@ -77,7 +79,7 @@ function setupInputPipe(channel, inPipe, pipeTypeIn, callback) {
       if (error2) {
         throw error2;
       }
-      channel.bindQueue(q.queue, inPipe, topicKey);
+      channel.bindQueue(q.queue, inPipe, routingKey);
       callback(q.queue);
     });
   } else {
@@ -100,14 +102,14 @@ function sendToDestination(channel, destination, message) {
     channel.sendToQueue(outOnePipe, Buffer.from(JSON.stringify(message)));
     console.log("Sent message to queue %s: %s", outOnePipe, JSON.stringify(message));
   } else if (destination === outOnePipe && pipeTypeOutOne === 'topic') {
-    channel.publish(outOnePipe, '', Buffer.from(JSON.stringify(message)));
-    console.log("Sent message to topic %s: %s", outOnePipe, JSON.stringify(message));
+    channel.publish(outOnePipe, outOneRoutingKey, Buffer.from(JSON.stringify(message)));
+    console.log("Sent message to topic %s with routing key %s: %s", outOnePipe, outOneRoutingKey, JSON.stringify(message));
   } else if (destination === outTwoPipe && pipeTypeOutTwo === 'queue') {
     channel.sendToQueue(outTwoPipe, Buffer.from(JSON.stringify(message)));
     console.log("Sent message to queue %s: %s", outTwoPipe, JSON.stringify(message));
   } else if (destination === outTwoPipe && pipeTypeOutTwo === 'topic') {
-    channel.publish(outTwoPipe, '', Buffer.from(JSON.stringify(message)));
-    console.log("Sent message to topic %s: %s", outTwoPipe, JSON.stringify(message));
+    channel.publish(outTwoPipe, outTwoRoutingKey, Buffer.from(JSON.stringify(message)));
+    console.log("Sent message to topic %s with routing key %s: %s", outTwoPipe, outTwoRoutingKey, JSON.stringify(message));
   } else {
     console.error("Unknown destination or pipe type.");
   }

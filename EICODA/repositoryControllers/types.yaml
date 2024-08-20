@@ -10,17 +10,11 @@ filterTypes:
         default: default
       - name: source
         default: /default/source
-      - name: topicKey
-        default: '#'
   - name: Receiver
     artifact: ReceiverArtifact
-    configs:
-      - name: topicKey
-        default: '#'
+  - name: Logger
+    artifact: LoggerArtifact
   - name: Custom
-    configs:
-      - name: topicKey
-        default: '#'
   - name: FlexRouter
     artifact: FlexRouterArtifact
     configs:
@@ -28,53 +22,55 @@ filterTypes:
         file: true
       - name: mode
         default: "single"
-      - name: topicKey
-        default: '#'
   - name: MessageFilter
     artifact: MessageFilterArtifact
     configs: 
       - name: criteria
         file: true
-      - name: topicKey
-        default: '#'
   - name: Splitter
+    artifact: SplitterArtifact
     configs: 
-      - name: criteria
-        file: true
-      - name: topicKey
-        default: '#'
+      - name: data
+      - name: eventType
+        default: default
+      - name: source
+        default: /default/source
   - name: Aggregator
+    artifact: AggregatorArtifact
     configs: 
-      - name: criteria
-        file: true
-      - name: topicKey
-        default: '#'
+      - name: data
+      - name: count
+      - eventType:
+        default: default
+      - name: source
+        default: /default/source
   - name: Resequencer
     artifact: ResequencerArtifact
     configs: 
       - name: count
-      - name: field
-      - name: topicKey
-        default: '#'
-  - name: MessageTranslator
-    artifact: MessageTranslatorArtifact
+      - name: data
+  - name: Translator
+    artifact: TranslatorArtifact
     configs: 
       - name: criteria
         file: true
-      - name: topicKey
-        default: '#'
   - name: ContentFilter
     artifact: ContentFilterArtifact
     configs: 
-      - name: fieldsToFilter
-      - name: topicKey
-        default: '#'
+      - name: data
   - name: ContentEnricher
     configs: 
       - name: criteria
         file: true
-      - name: topicKey
-        default: '#'
+      - name: source
+  - name: ContentEnricher
+    configs: 
+      - name: criteria
+        file: true
+  - name: MessagingBridge
+    configs: 
+      - name: source
+      - name: target
 
 deploymentArtifacts:
   - name: SenderArtifact
@@ -85,23 +81,35 @@ deploymentArtifacts:
     image: pstopper/eicoda-receiver:latest
     type: Docker
     internalPipes: ["in"]
+  - name: LoggerArtifact
+    image: pstopper/eicoda-logger:latest
+    type: Docker
+    internalPipes: ["in", "out"]
   - name: FlexRouterArtifact
     image: pstopper/eicoda-flexrouter:latest
     type: Docker
     internalPipes: ["in"]
   - name: MessageFilterArtifact
-    image: pstopper/eicoda-message-filter:latest
+    image: pstopper/eicoda-messagefilter:latest
     type: Docker
     internalPipes: ["in", "out"]
   - name: ResequencerArtifact
     image: pstopper/eicoda-resequencer:latest
     type: Docker
     internalPipes: ["in", "out"]
-  - name: MessageTranslatorArtifact
-    image: pstopper/eicoda-message-translator:latest
+  - name: SplitterArtifact
+    image: pstopper/eicoda-splitter:latest
+    type: Docker
+    internalPipes: ["in", "out"]
+  - name: AggregatorArtifact
+    image: pstopper/eicoda-aggregator:latest
+    type: Docker
+    internalPipes: ["in", "out"]
+  - name: TranslatorArtifact
+    image: pstopper/eicoda-translator:latest
     type: Docker
     internalPipes: ["in", "out"]
   - name: ContentFilterArtifact
-    image: pstopper/eicoda-content-filter:latest
+    image: pstopper/eicoda-contentfilter:latest
     type: Docker
     internalPipes: ["in", "out"]

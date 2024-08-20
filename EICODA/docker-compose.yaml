@@ -1,11 +1,52 @@
 services:
-  worldsender:
+  nehrensender:
     environment:
-    - out=amqp://admin:password@localhost:5672,messagePipe,queue
-    - 'data={"greeting": "Hallo Welt"}'
+    - out=amqp://admin:password@host.docker.internal:5672,messagePipe,queue
+    - 'data={"greeting": "Hallo Reutlingen"}'
     - interval=3000
-    - eventType=dummy
+    - eventType=default
+    - source=/default/source
     image: pstopper/eicoda-sender:latest
     volumes: []
+  reutlingenreceiver:
+    environment:
+    - in=amqp://admin:password@host.docker.internal:5672,reutlingenPipe,queue
+    image: pstopper/eicoda-receiver:latest
+    volumes: []
+  testrouter:
+    environment:
+    - in=amqp://admin:password@host.docker.internal:5672,messagePipe,queue
+    - outOne=amqp://admin:password@host.docker.internal:5672,reutlingenPipe,queue
+    - outTwo=amqp://admin:password@host.docker.internal:5672,worldPipe,topic
+    - outTwoRoutingKey=logs.#
+    - criteria=/etc/config/criteria
+    - mode=single
+    image: pstopper/eicoda-flexrouter:latest
+    volumes:
+    - C:\Users\pstopper\Documents\Master\Thesis\GithubRepo\EICODA\test-deployments\criteria.json:/etc/config/criteria
+  testtranslator:
+    environment:
+    - in=amqp://admin:password@host.docker.internal:5672,worldPipe,topic
+    - out=amqp://admin:password@host.docker.internal:5672,translatedPipe,queue
+    - criteria=/etc/config/criteria
+    image: pstopper/eicoda-translator:latest
+    volumes:
+    - C:\Users\pstopper\Documents\Master\Thesis\GithubRepo\EICODA\test-deployments\translation.json:/etc/config/criteria
+  worldsender:
+    environment:
+    - out=amqp://admin:password@host.docker.internal:5672,messagePipe,queue
+    - 'data={"greeting": "Hallo World"}'
+    - interval=3000
+    - eventType=default
+    - source=/default/source
+    image: pstopper/eicoda-sender:latest
+    volumes: []
+  worldtranslatedreceiver:
+    environment:
+    - in=amqp://admin:password@host.docker.internal:5672,translatedPipe,queue
+    image: pstopper/eicoda-receiver:latest
+    volumes: []
 version: "3"
-volumes: {}
+volumes:
+  testrouter-criteria: {}
+  testtranslator-criteria: {}

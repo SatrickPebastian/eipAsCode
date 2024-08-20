@@ -4,7 +4,7 @@ const process = require('process');
 // Load environment variables
 const interval = parseInt(process.env.interval, 10);
 const [pipeAddress, pipe, pipeType] = process.env.out.split(',');
-const routingKey = process.env.topicKey;
+const outRoutingKey = process.env.outRoutingKey || '';
 const messageString = process.env.data;
 const source = process.env.source;
 const type = process.env.eventType;
@@ -17,16 +17,6 @@ try {
   process.exit(1);
 }
 
-// Build CloudEvent
-const cloudEventMessage = {
-  specversion: '1.0',
-  id: `id-${Math.random()}`,
-  source: source,
-  type: type,
-  time: new Date().toISOString(),
-  data: messageData
-};
-
 amqp.connect(pipeAddress, function(error0, connection) {
   if (error0) {
     throw error0;
@@ -38,20 +28,40 @@ amqp.connect(pipeAddress, function(error0, connection) {
     }
 
     if (pipeType === 'queue') {
-      channel.assertQueue(pipe, { durable: true });
+      channel.assertQueue(pipe);
 
       const sendMessage = () => {
+        // Create a new CloudEvent message each time sendMessage is called
+        const cloudEventMessage = {
+          specversion: '1.0',
+          id: `id-${Math.random()}`,
+          source: source,
+          type: type,
+          time: new Date().toISOString(),
+          data: messageData
+        };
+
         channel.sendToQueue(pipe, Buffer.from(JSON.stringify(cloudEventMessage)));
         console.log("Sent to queue %s: %s", pipe, JSON.stringify(cloudEventMessage));
       };
 
       setInterval(sendMessage, interval);
     } else if (pipeType === 'topic') {
-      channel.assertExchange(pipe, 'topic', { durable: true });
+      channel.assertExchange(pipe, 'topic');
 
       const sendMessage = () => {
-        channel.publish(pipe, routingKey, Buffer.from(JSON.stringify(cloudEventMessage)));
-        console.log("Sent to exchange %s with routing key %s: %s", pipe, routingKey, JSON.stringify(cloudEventMessage));
+        // Create a new CloudEvent message each time sendMessage is called
+        const cloudEventMessage = {
+          specversion: '1.0',
+          id: `id-${Math.random()}`,
+          source: source,
+          type: type,
+          time: new Date().toISOString(),
+          data: messageData
+        };
+
+        channel.publish(pipe, outRoutingKey, Buffer.from(JSON.stringify(cloudEventMessage)));
+        console.log("Sent to exchange %s with routing key %s: %s", pipe, outRoutingKey, JSON.stringify(cloudEventMessage));
       };
 
       setInterval(sendMessage, interval);

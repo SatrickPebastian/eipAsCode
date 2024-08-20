@@ -8,6 +8,10 @@ pipes:
       name: "messagePipe"
       host: "devRabbitMQ"
       protocol: "amqp"
+    - id: 3b76043e-676b-40
+      name: "translatedPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
   topics:
     - id: 3b76043e-676b-4029-9008-b0215cec8e1d
       name: "worldPipe"
@@ -19,36 +23,43 @@ filters:
     name: "worldSender"
     host: "devDockerCompose"
     type: "Sender"
-    data: '{"greeting": "Hallo Welt"}'
+    data: '{"greeting": "Hallo World"}'
     mappings:
       - "out:messagePipe"
   - id: 577a26d2-216c-4e6e-95e0-e7808f8394
     name: "nehrenSender"
-    host: "devKubernetes"
+    host: "devDockerCompose"
     type: "Sender"
     data: '{"greeting": "Hallo Reutlingen"}'
     mappings:
       - "out:messagePipe"
   - id: 577a26d2-216c-4e6e-95e0-e7
     name: "testRouter"
-    host: "devKubernetes"
+    host: "devDockerCompose"
     type: "FlexRouter"
     criteria: "criteria.json"
-    mode: "test"
+    mode: "single"
     mappings:
       - "in:messagePipe"
       - "outOne:reutlingenPipe"
       - "outTwo:worldPipe->logs.#"
   - id: 577a26d2-216c-4e6e-95e0-e7808f83
     name: "reutlingenReceiver"
-    host: "devKubernetes"
+    host: "devDockerCompose"
     type: "Receiver"
     mappings:
       - "in:reutlingenPipe"
   - id: 577a26d2-216c-4e6e-9
-    name: "worldReceiver"
-    host: "devKubernetes"
+    name: "worldTranslatedReceiver"
+    host: "devDockerCompose"
     type: "Receiver"
     mappings:
+      - "in:translatedPipe"
+  - id: 577a26d2-216c-4
+    name: "testTranslator"
+    host: "devDockerCompose"
+    type: "Translator"
+    criteria: "translation.json"
+    mappings:
       - "in:worldPipe"
-    
+      - "out:translatedPipe"

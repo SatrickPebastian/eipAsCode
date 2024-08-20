@@ -4,7 +4,8 @@ const process = require('process');
 // Load environment variables
 const [pipeAddressIn, pipeIn, pipeTypeIn] = process.env.in.split(',');
 const [pipeAddressOut, pipeOut, pipeTypeOut] = process.env.out.split(',');
-const routingKey = process.env.topicKey;
+const inRoutingKey = process.env.inRoutingKey || '#';
+const outRoutingKey = process.env.outRoutingKey || '';
 
 amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
@@ -25,7 +26,7 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
           const message = JSON.parse(msg.content.toString());
           console.log("Received: %s", JSON.stringify(message));
 
-          forwardMessage(channel, pipeOut, pipeTypeOut, routingKey, message);
+          forwardMessage(channel, pipeOut, pipeTypeOut, outRoutingKey, message);
           channel.ack(msg);
         }
       }, {
@@ -34,7 +35,7 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
 
     } else if (pipeTypeIn === 'topic') {
       channel.assertExchange(pipeIn, 'topic');
-      console.log("Waiting for messages on topic exchange %s with routing key %s.", pipeIn, routingKey);
+      console.log("Waiting for messages on topic exchange %s with routing key %s.", pipeIn, inRoutingKey);
 
       //assert temporary queue
       channel.assertQueue('', { exclusive: true }, function(error2, q) {
@@ -42,13 +43,13 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
           throw error2;
         }
 
-        channel.bindQueue(q.queue, pipeIn, routingKey);
+        channel.bindQueue(q.queue, pipeIn, inRoutingKey);
         channel.consume(q.queue, function(msg) {
           if (msg !== null) {
             const message = JSON.parse(msg.content.toString());
             console.log("Received: %s", JSON.stringify(message));
 
-            forwardMessage(channel, pipeOut, pipeTypeOut, routingKey, message);
+            forwardMessage(channel, pipeOut, pipeTypeOut, outRoutingKey, message);
             channel.ack(msg);
           }
         }, {
@@ -64,12 +65,12 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
 
 function forwardMessage(channel, pipeOut, pipeTypeOut, routingKey, message) {
   if (pipeTypeOut === 'queue') {
-    channel.assertQueue(pipeOut, { durable: true });
+    channel.assertQueue(pipeOut);
     channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
     console.log("Forwarded message to queue %s", pipeOut);
 
   } else if (pipeTypeOut === 'topic') {
-    channel.assertExchange(pipeOut, 'topic', { durable: true });
+    channel.assertExchange(pipeOut, 'topic');
     channel.publish(pipeOut, routingKey, Buffer.from(JSON.stringify(message)));
     console.log("Forwarded message to topic exchange %s with routing key %s", pipeOut, routingKey);
 

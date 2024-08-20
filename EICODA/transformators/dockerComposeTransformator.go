@@ -103,11 +103,16 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 			}
 
 			if pipeHost != nil {
+				hostAddress := pipeHost.AdditionalProps["host_address"]
+				if hostAddress == "localhost" {
+					hostAddress = "host.docker.internal"
+				}
+
 				value := fmt.Sprintf("%s://%s:%s@%s:%s,%s,%s",
 					pipeProtocol,
 					pipeHost.AdditionalProps["username"],
 					pipeHost.AdditionalProps["password"],
-					pipeHost.AdditionalProps["host_address"],
+					hostAddress,   // Change localhost to host.docker.internal
 					pipeHost.AdditionalProps["messaging_port"],
 					pipeName,   // add the pipe name
 					pipeType,   // add the pipe type (queue or topic)

@@ -4,7 +4,8 @@ const path = require('path');
 
 const [pipeAddressIn, pipeIn, pipeTypeIn] = process.env.in.split(',');
 const [pipeAddressOut, pipeOut, pipeTypeOut] = process.env.out.split(',');
-const topicKey = process.env.topicKey;
+const inRoutingKey = process.env.inRoutingKey || '#';
+const outRoutingKey = process.env.outRoutingKey || '';
 
 const criteriaPath = '/etc/config/criteria';
 const filterLogic = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
@@ -31,15 +32,15 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
 
     } else if (pipeTypeIn === 'topic') {
       channel.assertExchange(pipeIn, 'topic');
-      console.log("Waiting for messages on topic exchange %s with topic key %s.", pipeIn, topicKey);
+      console.log("Waiting for messages on topic exchange %s with topic key %s.", pipeIn, inRoutingKey);
 
-      // asserts temporary queue für binding to exchange
+      // asserts temporary queue for binding to exchange
       channel.assertQueue('', { exclusive: true }, function(error2, q) {
         if (error2) {
           throw error2;
         }
 
-        channel.bindQueue(q.queue, pipeIn, topicKey);
+        channel.bindQueue(q.queue, pipeIn, inRoutingKey);
         channel.consume(q.queue, function(msg) {
           handleIncomingMessage(channel, msg);
         }, {
@@ -64,8 +65,8 @@ function handleIncomingMessage(channel, msg) {
 
     } else if (pipeTypeOut === 'topic') {
       channel.assertExchange(pipeOut, 'topic');
-      channel.publish(pipeOut, topicKey, Buffer.from(JSON.stringify(message)));
-      console.log("Sent filtered message to topic exchange %s with topic key %s: %s", pipeOut, topicKey, JSON.stringify(message));
+      channel.publish(pipeOut, outRoutingKey, Buffer.from(JSON.stringify(message)));
+      console.log("Sent filtered message to topic exchange %s with topic key %s: %s", pipeOut, outRoutingKey, JSON.stringify(message));
 
     } else {
       console.error(`Unknown pipe type for output: ${pipeTypeOut}`);

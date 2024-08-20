@@ -1,0 +1,3 @@
+{
+    "newGreeting": "data.greeting & 'spy'"
+}

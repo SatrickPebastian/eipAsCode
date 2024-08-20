@@ -34,6 +34,16 @@ resource "rabbitmq_queue" "messagePipe" {
 }
 
 
+resource "rabbitmq_queue" "translatedPipe" {
+  name      = "translatedPipe"
+  vhost     = "/"
+  settings {
+    durable    = true
+    auto_delete = false
+  }
+}
+
+
 resource "rabbitmq_exchange" "worldPipe" {
   name  = "worldPipe"
   vhost = "/"

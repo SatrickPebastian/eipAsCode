@@ -1,6 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: worldsender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worldsender
+  template:
+    metadata:
+      labels:
+        app: worldsender
+    spec:
+      containers:
+      - env:
+        - name: out
+          value: amqp://admin:password@rabbitmq:5672,messagePipe,queue
+        - name: data
+          value: '{"greeting": "Hallo World"}'
+        - name: interval
+          value: "3000"
+        - name: eventType
+          value: default
+        - name: source
+          value: /default/source
+        image: pstopper/eicoda-sender:latest
+        name: worldsender
+        volumeMounts: []
+      volumes: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: nehrensender
 spec:
   replicas: 1
@@ -21,7 +52,9 @@ spec:
         - name: interval
           value: "3000"
         - name: eventType
-          value: dummy
+          value: default
+        - name: source
+          value: /default/source
         image: pstopper/eicoda-sender:latest
         name: nehrensender
         volumeMounts: []
@@ -52,7 +85,7 @@ spec:
         - name: outTwoRoutingKey
           value: logs.#
         - name: mode
-          value: test
+          value: single
         image: pstopper/eicoda-flexrouter:latest
         name: testrouter
         volumeMounts:
