@@ -1,40 +1,34 @@
 const amqp = require('amqplib/callback_api');
 const fs = require('fs');
-const path = require('path');
 
-// Load environment variables
-const inputPipe = process.env.in;
-const [pipeAddressOne, pipeOne] = process.env.out.split(',');
-const criteriaPath = process.env.criteria;
-const resequencerConfig = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
+const [pipeAddressIn, pipeIn] = process.env.in.split(',');
+const [pipeAddressOut, pipeOut] = process.env.out.split(',');
+const dataToSort = process.env.data;
+const count = parseInt(process.env.count, 10);
 
-// Buffer to hold incoming messages
 let messageBuffer = [];
 
-// Connect to the input AMQP queue
-amqp.connect(inputPipe, function(error0, connection) {
+amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
     throw error0;
   }
+
   connection.createChannel(function(error1, channel) {
     if (error1) {
       throw error1;
     }
 
-    const queue = 'input';
+    channel.assertQueue(pipeIn);
+    channel.assertQueue(pipeOut);
 
-    channel.assertQueue(queue, {
-      durable: true
-    });
+    console.log("Waiting for messages in %s.", pipeIn);
 
-    console.log("Waiting for messages in %s. To exit press CTRL+C", queue);
-
-    channel.consume(queue, function(msg) {
+    channel.consume(pipeIn, function(msg) {
       const message = JSON.parse(msg.content.toString());
       messageBuffer.push(message);
 
-      if (messageBuffer.length >= resequencerConfig.count) {
-        resequenceAndSendMessages();
+      if (messageBuffer.length >= count) {
+        resequenceAndSendMessages(channel);
       }
 
       channel.ack(msg);
@@ -44,39 +38,23 @@ amqp.connect(inputPipe, function(error0, connection) {
   });
 });
 
-// Resequence messages and send to the output queue
-function resequenceAndSendMessages() {
-  // Sort messages based on the timestamp field
+function resequenceAndSendMessages(channel) {
+  //sort buffered messages based on dataToSort field
   messageBuffer.sort((a, b) => {
-    const aValue = getFieldValue(a, resequencerConfig.field);
-    const bValue = getFieldValue(b, resequencerConfig.field);
+    const aValue = getFieldValue(a, dataToSort);
+    const bValue = getFieldValue(b, dataToSort);
     return aValue - bValue;
   });
 
-  // Connect to the output AMQP queue and send sorted messages
-  amqp.connect(pipeAddressOne, function(error2, connection2) {
-    if (error2) {
-      throw error2;
-    }
-    connection2.createChannel(function(error3, channel2) {
-      if (error3) {
-        throw error3;
-      }
-      channel2.assertQueue(pipeOne, {
-        durable: true
-      });
-
-      messageBuffer.forEach(message => {
-        channel2.sendToQueue(pipeOne, Buffer.from(JSON.stringify(message)));
-        console.log("Sent message to %s: %s", pipeOne, JSON.stringify(message));
-      });
-
-      // Clear the buffer after sending the messages
-      messageBuffer = [];
-    });
+  messageBuffer.forEach(message => {
+    channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
+    console.log("Sent message to %s: %s", pipeOut, JSON.stringify(message));
   });
+
+  messageBuffer = [];
 }
 
+//helper function to get data from nested field
 function getFieldValue(message, field) {
   return field.split('.').reduce((o, i) => o && o[i], message);
 }

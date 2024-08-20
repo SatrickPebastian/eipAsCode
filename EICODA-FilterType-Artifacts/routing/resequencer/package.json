@@ -1,7 +1,7 @@
 {
   "name": "message-resequencer",
   "version": "1.0.0",
-  "description": "Message Resequencer for AMQP",
+  "description": "EICODA Message Resequencer for AMQP",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"

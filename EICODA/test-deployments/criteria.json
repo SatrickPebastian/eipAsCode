@@ -1,11 +1,11 @@
 {
   "criterias": [
     {
-      "condition": "message.data.greeting === 'Hello World'",
+      "condition": "message.data.greeting === 'Hallo World'",
       "destination": "worldPipe"
     },
     {
-      "condition": "message.data.greeting === 'Hello Reutlingen'",
+      "condition": "message.data.greeting === 'Hallo Reutlingen'",
       "destination": "reutlingenPipe"
     }
   ],

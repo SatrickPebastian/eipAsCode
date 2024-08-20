@@ -3,10 +3,13 @@ filterTypes:
     artifact: SenderArtifact
     configs:
       - name: data
+        default: '{"greeting": "Hello World"}'
       - name: interval
-        default: 1
+        default: 3000
       - name: eventType
-        default: dummy
+        default: default
+      - name: source
+        default: /default/source
   - name: Receiver
     artifact: ReceiverArtifact
   - name: Custom

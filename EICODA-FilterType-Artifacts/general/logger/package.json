@@ -1,7 +1,7 @@
 {
-    "name": "message-sender",
+    "name": "logger",
     "version": "1.0.0",
-    "description": "Message Sender for AMQP",
+    "description": "EICODA Logger for AMQP",
     "main": "app.js",
     "scripts": {
       "start": "node app.js"

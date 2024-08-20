@@ -18,14 +18,14 @@ filters:
     name: "worldSender"
     host: "devKubernetes"
     type: "Sender"
-    data: '{"greeting": "Hello World"}'
+    data: '{"greeting": "Hallo Welt"}'
     mappings:
       - "out:messagePipe"
   - id: 577a26d2-216c-4e6e-95e0-e7808f8394
     name: "nehrenSender"
     host: "devKubernetes"
     type: "Sender"
-    data: '{"greeting": "Hello Reutlingen"}'
+    data: '{"greeting": "Hallo Reutlingen"}'
     mappings:
       - "out:messagePipe"
   - id: 577a26d2-216c-4e6e-95e0-e7

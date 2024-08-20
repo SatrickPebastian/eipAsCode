@@ -1,14 +1,15 @@
 const amqp = require('amqplib/callback_api');
+const process = require('process');
 
+// Load environment variables
 const [pipeAddressIn, pipeIn] = process.env.in.split(',');
 const [pipeAddressOut, pipeOut] = process.env.out.split(',');
-const dataToFilter = process.env.data.split(',');
 
 amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
     throw error0;
   }
-  
+
   connection.createChannel(function(error1, channel) {
     if (error1) {
       throw error1;
@@ -21,14 +22,11 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
 
     channel.consume(pipeIn, function(msg) {
       const message = JSON.parse(msg.content.toString());
-
-      //apply filter
-      dataToFilter.forEach(field => {
-        deleteNestedField(message.data, field.split('.'));
-      });
+      
+      console.log("Received: %s", JSON.stringify(message));
 
       channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
-      console.log("Sent filtered message to %s: %s", pipeOut, JSON.stringify(message));
+      console.log("Forwarded message to %s", pipeOut);
 
       channel.ack(msg);
     }, {
@@ -36,17 +34,3 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
     });
   });
 });
-
-//deletes a nested field
-function deleteNestedField(obj, fieldPath) {
-  if (!obj) return;
-
-  if (fieldPath.length === 1) {
-    delete obj[fieldPath[0]];
-  } else {
-    const field = fieldPath.shift();
-    if (obj[field]) {
-      deleteNestedField(obj[field], fieldPath);
-    }
-  }
-}

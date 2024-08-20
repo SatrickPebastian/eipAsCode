@@ -2,13 +2,12 @@ const amqp = require('amqplib/callback_api');
 const process = require('process');
 
 // Load environment variables
-const interval = parseInt(process.env.interval, 10) || 5000;
+const interval = parseInt(process.env.interval, 10);
 const [queueAddress, queue] = process.env.out.split(',');
-const messageString = process.env.data || '{"default": "Hello, World!"}';
-const source = '/default/sender';
+const messageString = process.env.data;
+const source = process.env.source;
 const type = process.env.eventType;
 
-// Parse the JSON message from the environment variable
 let messageData;
 try {
   messageData = JSON.parse(messageString);
@@ -17,7 +16,7 @@ try {
   process.exit(1);
 }
 
-// Construct the CloudEvent message
+// Build CloudEvent
 const cloudEventMessage = {
   specversion: '1.0',
   id: `id-${Math.random()}`,
@@ -27,7 +26,6 @@ const cloudEventMessage = {
   data: messageData
 };
 
-// Connect to the RabbitMQ server
 amqp.connect(queueAddress, function(error0, connection) {
   if (error0) {
     throw error0;
@@ -38,17 +36,14 @@ amqp.connect(queueAddress, function(error0, connection) {
       throw error1;
     }
 
-    channel.assertQueue(queue, {
-      durable: true
-    });
+    channel.assertQueue(queue);
 
-    // Function to send a message
     const sendMessage = () => {
       channel.sendToQueue(queue, Buffer.from(JSON.stringify(cloudEventMessage)));
       console.log("Sent: %s", JSON.stringify(cloudEventMessage));
     };
 
-    // Set interval for sending messages
+    //Set interval for sending messages
     setInterval(sendMessage, interval);
   });
 });

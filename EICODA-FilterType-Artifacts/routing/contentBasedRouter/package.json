@@ -1,7 +1,7 @@
 {
-  "name": "content-based-router",
+  "name": "flex-router",
   "version": "1.0.0",
-  "description": "Content-Based Router for AMQP",
+  "description": "EICODA Flex Router for AMQP",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"

@@ -1,7 +1,7 @@
 {
     "name": "message-receiver",
     "version": "1.0.0",
-    "description": "Message Receiver for RabbitMQ",
+    "description": "Message Receiver for AMQP",
     "main": "app.js",
     "scripts": {
       "start": "node app.js"

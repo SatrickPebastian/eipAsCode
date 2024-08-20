@@ -1,7 +1,7 @@
 {
   "name": "content-filter",
   "version": "1.0.0",
-  "description": "Content Filter for AMQP",
+  "description": "EICODA Content Filter for AMQP",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"

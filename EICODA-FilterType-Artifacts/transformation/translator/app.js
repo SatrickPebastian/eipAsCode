@@ -1,16 +1,14 @@
 const amqp = require('amqplib/callback_api');
 const fs = require('fs');
-const path = require('path');
 const jsonata = require('jsonata');
 
-// Load environment variables
-const inputPipe = process.env.in;
-const [pipeAddressOne, pipeOne] = process.env.out.split(',');
-const criteriaPath = process.env.criteria;
-const transformationLogic = fs.readFileSync(criteriaPath, 'utf8');
+const [pipeAddressIn, pipeIn] = process.env.in.split(',');
+const [pipeAddressOut, pipeOut] = process.env.out.split(',');
 
-// Connect to the input AMQP queue
-amqp.connect(inputPipe, function(error0, connection) {
+const criteriaPath = '/etc/config/criteria';
+const transformationLogic = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
+
+amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
     throw error0;
   }
@@ -19,37 +17,29 @@ amqp.connect(inputPipe, function(error0, connection) {
       throw error1;
     }
 
-    const queue = 'input';
+    channel.assertQueue(pipeIn);
+    channel.assertQueue(pipeOut);
 
-    channel.assertQueue(queue, {
-      durable: true
-    });
+    console.log("Waiting for messages in %s.", pipeIn);
 
-    console.log("Waiting for messages in %s. To exit press CTRL+C", queue);
-
-    channel.consume(queue, function(msg) {
+    channel.consume(pipeIn, function(msg) {
       const message = JSON.parse(msg.content.toString());
 
-      // Apply the JSONata translation
-      const expression = jsonata(transformationLogic);
-      const translatedMessage = expression.evaluate(message);
+      //apply jsonata translation to data part of consumed message
+      const transformedData = {};
+      for (let [key, expr] of Object.entries(transformationLogic)) {
+        const expression = jsonata(expr);
+        transformedData[key] = expression.evaluate(message.data);
+      }
 
-      // Connect to the output AMQP queue and send the translated message
-      amqp.connect(pipeAddressOne, function(error2, connection2) {
-        if (error2) {
-          throw error2;
-        }
-        connection2.createChannel(function(error3, channel2) {
-          if (error3) {
-            throw error3;
-          }
-          channel2.assertQueue(pipeOne, {
-            durable: true
-          });
-          channel2.sendToQueue(pipeOne, Buffer.from(JSON.stringify(translatedMessage)));
-          console.log("Sent translated message to %s: %s", pipeOne, JSON.stringify(translatedMessage));
-        });
-      });
+      //merge translated message back into consumed message
+      const translatedMessage = {
+        ...message,       //preserve cloudEvents specific fields
+        data: transformedData
+      };
+
+      channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(translatedMessage)));
+      console.log("Sent translated message to %s: %s", pipeOut, JSON.stringify(translatedMessage));
 
       channel.ack(msg);
     }, {

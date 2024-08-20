@@ -1,7 +1,7 @@
 {
-  "name": "message-filter",
+  "name": "aggregator",
   "version": "1.0.0",
-  "description": "EICODA Message Filter for AMQP",
+  "description": "EICODA Aggregator for AMQP",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
