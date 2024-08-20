@@ -2,45 +2,82 @@ const amqp = require('amqplib/callback_api');
 const fs = require('fs');
 const path = require('path');
 
-const [pipeAddressIn, pipeIn] = process.env.in.split(',');
-const [pipeAddressOut, pipeOut] = process.env.out.split(',');
+const [pipeAddressIn, pipeIn, pipeTypeIn] = process.env.in.split(',');
+const [pipeAddressOut, pipeOut, pipeTypeOut] = process.env.out.split(',');
+const topicKey = process.env.topicKey;
 
-//Here the criterias get loaded. Kubernetes and Docker Compose always mount to this point
-const criteriaPath = '/etc/config/criteria'
+const criteriaPath = '/etc/config/criteria';
 const filterLogic = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
 
 amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
     throw error0;
   }
+
   connection.createChannel(function(error1, channel) {
     if (error1) {
       throw error1;
     }
 
-    channel.assertQueue(pipeIn);
-    channel.assertQueue(pipeOut);
+    if (pipeTypeIn === 'queue') {
+      channel.assertQueue(pipeIn);
+      console.log("Waiting for messages in queue %s.", pipeIn);
 
-    console.log("Waiting for messages in %s.", pipeIn);
+      channel.consume(pipeIn, function(msg) {
+        handleIncomingMessage(channel, msg);
+      }, {
+        noAck: false
+      });
 
-    channel.consume(pipeIn, function(msg) {
-      const message = JSON.parse(msg.content.toString());
+    } else if (pipeTypeIn === 'topic') {
+      channel.assertExchange(pipeIn, 'topic');
+      console.log("Waiting for messages on topic exchange %s with topic key %s.", pipeIn, topicKey);
 
-      if (filterMessage(message)) {
-        channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
-        console.log("Sent message to %s: %s", pipeOne, JSON.stringify(message));
-      } else {
-        console.log("Message filtered out: %s", JSON.stringify(message));
-      }
+      // asserts temporary queue für binding to exchange
+      channel.assertQueue('', { exclusive: true }, function(error2, q) {
+        if (error2) {
+          throw error2;
+        }
 
-      channel.ack(msg);
-    }, {
-      noAck: false
-    });
+        channel.bindQueue(q.queue, pipeIn, topicKey);
+        channel.consume(q.queue, function(msg) {
+          handleIncomingMessage(channel, msg);
+        }, {
+          noAck: false
+        });
+      });
+
+    } else {
+      console.error(`Unknown pipe type for input: ${pipeTypeIn}`);
+    }
   });
 });
 
-//Filter message logic
+function handleIncomingMessage(channel, msg) {
+  const message = JSON.parse(msg.content.toString());
+
+  if (filterMessage(message)) {
+    if (pipeTypeOut === 'queue') {
+      channel.assertQueue(pipeOut);
+      channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
+      console.log("Sent filtered message to queue %s: %s", pipeOut, JSON.stringify(message));
+
+    } else if (pipeTypeOut === 'topic') {
+      channel.assertExchange(pipeOut, 'topic');
+      channel.publish(pipeOut, topicKey, Buffer.from(JSON.stringify(message)));
+      console.log("Sent filtered message to topic exchange %s with topic key %s: %s", pipeOut, topicKey, JSON.stringify(message));
+
+    } else {
+      console.error(`Unknown pipe type for output: ${pipeTypeOut}`);
+    }
+  } else {
+    console.log("Message filtered out: %s", JSON.stringify(message));
+  }
+
+  channel.ack(msg);
+}
+
+// Filter message logic
 function filterMessage(message) {
   return filterLogic.criterias.every(rule => eval(rule.condition));
 }

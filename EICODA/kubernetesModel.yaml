@@ -30,6 +30,53 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: testrouter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testrouter
+  template:
+    metadata:
+      labels:
+        app: testrouter
+    spec:
+      containers:
+      - env:
+        - name: in
+          value: amqp://admin:password@rabbitmq:5672,messagePipe,queue
+        - name: outOne
+          value: amqp://admin:password@rabbitmq:5672,reutlingenPipe,queue
+        - name: outTwo
+          value: amqp://admin:password@rabbitmq:5672,worldPipe,topic
+        - name: outTwoRoutingKey
+          value: logs.#
+        - name: mode
+          value: test
+        image: pstopper/eicoda-flexrouter:latest
+        name: testrouter
+        volumeMounts:
+        - mountPath: /etc/config/criteria
+          name: testrouter-criteria
+          subPath: criteria
+      volumes:
+      - configMap:
+          name: testrouter-criteria
+        name: testrouter-criteria
+---
+apiVersion: v1
+data:
+  criteria: "{\r\n  \"criterias\": [\r\n    {\r\n      \"condition\": \"message.data.greeting
+    === 'Hallo World'\",\r\n      \"destination\": \"worldPipe\"\r\n    },\r\n    {\r\n
+    \     \"condition\": \"message.data.greeting === 'Hallo Reutlingen'\",\r\n      \"destination\":
+    \"reutlingenPipe\"\r\n    }\r\n  ],\r\n  \"default\": \"reutlingenPipe\"\r\n}\r\n"
+kind: ConfigMap
+metadata:
+  name: testrouter-criteria
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: reutlingenreceiver
 spec:
   replicas: 1

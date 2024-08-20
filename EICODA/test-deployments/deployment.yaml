@@ -31,14 +31,14 @@ filters:
       - "out:messagePipe"
   - id: 577a26d2-216c-4e6e-95e0-e7
     name: "testRouter"
-    host: "devDockerCompose"
+    host: "devKubernetes"
     type: "FlexRouter"
     criteria: "criteria.json"
     mode: "test"
     mappings:
       - "in:messagePipe"
       - "outOne:reutlingenPipe"
-      - "outTwo:worldPipe"
+      - "outTwo:worldPipe->logs.#"
   - id: 577a26d2-216c-4e6e-95e0-e7808f83
     name: "reutlingenReceiver"
     host: "devKubernetes"

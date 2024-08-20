@@ -10,9 +10,17 @@ filterTypes:
         default: default
       - name: source
         default: /default/source
+      - name: topicKey
+        default: '#'
   - name: Receiver
     artifact: ReceiverArtifact
+    configs:
+      - name: topicKey
+        default: '#'
   - name: Custom
+    configs:
+      - name: topicKey
+        default: '#'
   - name: FlexRouter
     artifact: FlexRouterArtifact
     configs:
@@ -20,37 +28,53 @@ filterTypes:
         file: true
       - name: mode
         default: "single"
+      - name: topicKey
+        default: '#'
   - name: MessageFilter
     artifact: MessageFilterArtifact
     configs: 
       - name: criteria
         file: true
+      - name: topicKey
+        default: '#'
   - name: Splitter
     configs: 
       - name: criteria
         file: true
+      - name: topicKey
+        default: '#'
   - name: Aggregator
     configs: 
       - name: criteria
         file: true
+      - name: topicKey
+        default: '#'
   - name: Resequencer
     artifact: ResequencerArtifact
     configs: 
       - name: count
       - name: field
+      - name: topicKey
+        default: '#'
   - name: MessageTranslator
     artifact: MessageTranslatorArtifact
     configs: 
       - name: criteria
         file: true
+      - name: topicKey
+        default: '#'
   - name: ContentFilter
     artifact: ContentFilterArtifact
     configs: 
       - name: fieldsToFilter
+      - name: topicKey
+        default: '#'
   - name: ContentEnricher
     configs: 
       - name: criteria
         file: true
+      - name: topicKey
+        default: '#'
 
 deploymentArtifacts:
   - name: SenderArtifact

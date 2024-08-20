@@ -66,7 +66,22 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 	for _, mapping := range filter.Mappings {
 		parts := strings.Split(mapping, ":")
 		if len(parts) == 2 {
-			pipeName := parts[1]
+			pipeMapping := parts[1]
+			var pipeName, routingKey string
+
+			// Check if the mapping has a routing key defined with "->"
+			if strings.Contains(pipeMapping, "->") {
+				pipeParts := strings.Split(pipeMapping, "->")
+				if len(pipeParts) == 2 {
+					pipeName = pipeParts[0]
+					routingKey = pipeParts[1]
+				} else {
+					pipeName = pipeMapping // Fallback in case of incorrect formatting
+				}
+			} else {
+				pipeName = pipeMapping
+			}
+
 			var pipeType string
 			var pipeHost *models.Host
 			var pipeProtocol string
@@ -97,7 +112,14 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 					pipeName,   // add the pipe name
 					pipeType,   // add the pipe type (queue or topic)
 				)
+
+				// Set the environment variable for the pipe name (e.g., "in": "reutlingenPipe")
 				envVars = append(envVars, fmt.Sprintf("%s=%s", parts[0], value))
+
+				// Set the routingKey environment variable if defined
+				if routingKey != "" {
+					envVars = append(envVars, fmt.Sprintf("%sRoutingKey=%s", parts[0], routingKey))
+				}
 			}
 		}
 	}

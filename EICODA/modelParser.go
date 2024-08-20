@@ -10,6 +10,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	"eicoda/models"
+	"eicoda/utils" // Ensure this import is included
 )
 
 // ModelParser handles parsing of deployment configuration files
@@ -465,6 +466,26 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			if len(parts) != 2 {
 				return fmt.Errorf("invalid mapping format: %s", mapping)
 			}
+
+			externalParts := strings.Split(parts[1], "->")
+			pipeName := externalParts[0]
+			if !definedPipes[pipeName] {
+				return fmt.Errorf("mapping target pipe %s not defined in queues or topics", pipeName)
+			}
+
+			// Check if the pipe is a queue or topic
+			queue := utils.FindQueueByName(model.Pipes.Queues, pipeName)
+			topic := utils.FindTopicByName(model.Pipes.Topics, pipeName)
+
+			if queue != nil && len(externalParts) > 1 {
+				return fmt.Errorf("routingKey not allowed on queue %s", pipeName)
+			}
+
+			if topic != nil && len(externalParts) > 1 {
+				// Valid routingKey provided for topic
+				continue
+			}
+
 			internalPipeFound := false
 			for _, internalPipe := range artifact.InternalPipes {
 				if parts[0] == internalPipe {
@@ -475,29 +496,6 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			if !internalPipeFound {
 				return fmt.Errorf("mapping internal pipe %s not defined in deployment artifact %s", parts[0], artifact.Name)
 			}
-
-			pipeName := parts[1]
-			if !definedPipes[pipeName] {
-				return fmt.Errorf("mapping target pipe %s not defined in queues or topics", pipeName)
-			}
-
-			// var pipeProtocol string
-			// for _, queue := range model.Pipes.Queues {
-			// 	if queue.Name == pipeName {
-			// 		pipeProtocol = queue.Protocol
-			// 		break
-			// 	}
-			// }
-			// for _, topic := range model.Pipes.Topics {
-			// 	if topic.Name == pipeName {
-			// 		pipeProtocol = topic.Protocol
-			// 		break
-			// 	}
-			// }
-
-			// if !protocolMap[pipeProtocol] {
-			// 	return fmt.Errorf("protocol %s of pipe %s is not allowed by deployment artifact %s", pipeProtocol, pipeName, artifact.Name)
-			// }
 		}
 
 		internalPipesSet := make(map[string]bool)

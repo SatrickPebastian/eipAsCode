@@ -2,8 +2,9 @@ const amqp = require('amqplib/callback_api');
 const process = require('process');
 
 // Load environment variables
-const [pipeAddressIn, pipeIn] = process.env.in.split(',');
-const [pipeAddressOut, pipeOut] = process.env.out.split(',');
+const [pipeAddressIn, pipeIn, pipeTypeIn] = process.env.in.split(',');
+const [pipeAddressOut, pipeOut, pipeTypeOut] = process.env.out.split(',');
+const routingKey = process.env.topicKey;
 
 amqp.connect(pipeAddressIn, function(error0, connection) {
   if (error0) {
@@ -15,22 +16,64 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       throw error1;
     }
 
-    channel.assertQueue(pipeIn);
-    channel.assertQueue(pipeOut);
+    if (pipeTypeIn === 'queue') {
+      channel.assertQueue(pipeIn);
+      console.log("Waiting for messages in queue %s.", pipeIn);
 
-    console.log("Waiting for messages in %s.", pipeIn);
+      channel.consume(pipeIn, function(msg) {
+        if (msg !== null) {
+          const message = JSON.parse(msg.content.toString());
+          console.log("Received: %s", JSON.stringify(message));
 
-    channel.consume(pipeIn, function(msg) {
-      const message = JSON.parse(msg.content.toString());
-      
-      console.log("Received: %s", JSON.stringify(message));
+          forwardMessage(channel, pipeOut, pipeTypeOut, routingKey, message);
+          channel.ack(msg);
+        }
+      }, {
+        noAck: false
+      });
 
-      channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
-      console.log("Forwarded message to %s", pipeOut);
+    } else if (pipeTypeIn === 'topic') {
+      channel.assertExchange(pipeIn, 'topic');
+      console.log("Waiting for messages on topic exchange %s with routing key %s.", pipeIn, routingKey);
 
-      channel.ack(msg);
-    }, {
-      noAck: false
-    });
+      //assert temporary queue
+      channel.assertQueue('', { exclusive: true }, function(error2, q) {
+        if (error2) {
+          throw error2;
+        }
+
+        channel.bindQueue(q.queue, pipeIn, routingKey);
+        channel.consume(q.queue, function(msg) {
+          if (msg !== null) {
+            const message = JSON.parse(msg.content.toString());
+            console.log("Received: %s", JSON.stringify(message));
+
+            forwardMessage(channel, pipeOut, pipeTypeOut, routingKey, message);
+            channel.ack(msg);
+          }
+        }, {
+          noAck: false
+        });
+      });
+
+    } else {
+      console.error(`Unknown pipe type for input: ${pipeTypeIn}`);
+    }
   });
 });
+
+function forwardMessage(channel, pipeOut, pipeTypeOut, routingKey, message) {
+  if (pipeTypeOut === 'queue') {
+    channel.assertQueue(pipeOut, { durable: true });
+    channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
+    console.log("Forwarded message to queue %s", pipeOut);
+
+  } else if (pipeTypeOut === 'topic') {
+    channel.assertExchange(pipeOut, 'topic', { durable: true });
+    channel.publish(pipeOut, routingKey, Buffer.from(JSON.stringify(message)));
+    console.log("Forwarded message to topic exchange %s with routing key %s", pipeOut, routingKey);
+
+  } else {
+    console.error(`Unknown pipe type for output: ${pipeTypeOut}`);
+  }
+}

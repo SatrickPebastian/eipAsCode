@@ -1,14 +1,4 @@
 services:
-  testrouter:
-    environment:
-    - in=amqp://admin:password@localhost:5672,messagePipe,queue
-    - outOne=amqp://admin:password@localhost:5672,reutlingenPipe,queue
-    - outTwo=amqp://admin:password@localhost:5672,worldPipe,topic
-    - criteria=/etc/config/criteria
-    - mode=test
-    image: pstopper/eicoda-flexrouter:latest
-    volumes:
-    - C:\Users\pstopper\Documents\Master\Thesis\GithubRepo\EICODA\test-deployments\criteria.json:/etc/config/criteria
   worldsender:
     environment:
     - out=amqp://admin:password@localhost:5672,messagePipe,queue
@@ -18,5 +8,4 @@ services:
     image: pstopper/eicoda-sender:latest
     volumes: []
 version: "3"
-volumes:
-  testrouter-criteria: {}
+volumes: {}
