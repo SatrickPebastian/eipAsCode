@@ -7,9 +7,9 @@ filterTypes:
       - name: interval
         default: 3000
       - name: eventType
-        default: default
+        default: unspecified
       - name: source
-        default: /default/source
+        default: /unspecified/source
   - name: Receiver
     artifact: ReceiverArtifact
   - name: Logger
@@ -49,6 +49,8 @@ filterTypes:
     configs: 
       - name: count
       - name: data
+      - name: mode
+        default: asc
   - name: Translator
     artifact: TranslatorArtifact
     configs: 

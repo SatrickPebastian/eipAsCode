@@ -7,6 +7,7 @@ const inRoutingKey = process.env.inRoutingKey || '#';
 const outRoutingKey = process.env.outRoutingKey || '';
 const dataToSort = process.env.data;
 const count = parseInt(process.env.count, 10);
+const sortMode = process.env.mode;
 
 let messageBuffer = [];
 
@@ -70,11 +71,16 @@ function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
 }
 
 function resequenceAndSendMessages(channel) {
-  // Sort buffered messages based on dataToSort field
+  // Sort buffered messages based on dataToSort field and sortMode
   messageBuffer.sort((a, b) => {
     const aValue = getFieldValue(a, dataToSort);
     const bValue = getFieldValue(b, dataToSort);
-    return aValue - bValue;
+    
+    if (sortMode === 'desc') {
+      return bValue - aValue;  // Sort in descending order
+    } else {
+      return aValue - bValue;  // Sort in ascending order (default)
+    }
   });
 
   messageBuffer.forEach(message => {

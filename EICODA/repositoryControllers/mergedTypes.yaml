@@ -45,6 +45,8 @@ filterTypes:
   configs:
   - name: count
   - name: data
+  - name: mode
+    default: asc
 - name: Translator
   artifact: TranslatorArtifact
   configs:
