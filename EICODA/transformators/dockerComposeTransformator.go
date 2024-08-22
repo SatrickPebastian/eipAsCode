@@ -11,10 +11,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// DockerComposeTransformator is responsible for transforming the model to Docker Compose format
 type DockerComposeTransformator struct{}
 
-// Transform transforms the model to Docker Compose format and optionally writes to a file
+//transforms the model to Docker Compose format and optionally writes to a file
 func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bool, baseDir string) (string, error) {
 	services := make(map[string]interface{})
 	volumes := map[string]interface{}{}
@@ -46,9 +45,9 @@ func (t *DockerComposeTransformator) Transform(model *models.Model, writeFile bo
 	}
 	encoder.Close()
 
-	// Write to file if writeFile is true
+	//write to file if writeFile is true
 	if writeFile {
-		outputPath := "docker-compose.yaml" // Write to the root folder
+		outputPath := "docker-compose.yaml"
 		err := os.WriteFile(outputPath, []byte(sb.String()), 0644)
 		if err != nil {
 			return "", fmt.Errorf("failed to write Docker Compose model to file: %w", err)
@@ -69,14 +68,14 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 			pipeMapping := parts[1]
 			var pipeName, routingKey string
 
-			// Check if the mapping has a routing key defined with "->"
+			//check if the mapping has a routing key
 			if strings.Contains(pipeMapping, "->") {
 				pipeParts := strings.Split(pipeMapping, "->")
 				if len(pipeParts) == 2 {
 					pipeName = pipeParts[0]
 					routingKey = pipeParts[1]
 				} else {
-					pipeName = pipeMapping // Fallback in case of incorrect formatting
+					pipeName = pipeMapping
 				}
 			} else {
 				pipeName = pipeMapping
@@ -86,14 +85,12 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 			var pipeHost *models.Host
 			var pipeProtocol string
 
-			// Check if it's a queue
 			queue := utils.FindQueueByName(model.Pipes.Queues, pipeName)
 			if queue != nil {
 				pipeType = "queue"
 				pipeHost = utils.FindHostByName(model.Hosts.PipeHosts, queue.Host)
 				pipeProtocol = queue.Protocol
 			} else {
-				// If not a queue, it must be a topic
 				topic := utils.FindTopicByName(model.Pipes.Topics, pipeName)
 				if topic != nil {
 					pipeType = "topic"
@@ -112,16 +109,14 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 					pipeProtocol,
 					pipeHost.AdditionalProps["username"],
 					pipeHost.AdditionalProps["password"],
-					hostAddress,   // Change localhost to host.docker.internal
+					hostAddress,   //change localhost to host.docker.internal
 					pipeHost.AdditionalProps["messaging_port"],
-					pipeName,   // add the pipe name
-					pipeType,   // add the pipe type (queue or topic)
+					pipeName,
+					pipeType,
 				)
 
-				// Set the environment variable for the pipe name (e.g., "in": "reutlingenPipe")
 				envVars = append(envVars, fmt.Sprintf("%s=%s", parts[0], value))
 
-				// Set the routingKey environment variable if defined
 				if routingKey != "" {
 					envVars = append(envVars, fmt.Sprintf("%sRoutingKey=%s", parts[0], routingKey))
 				}
@@ -129,7 +124,7 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 		}
 	}
 
-	// Add environment variables for filter type configs
+	//adds environment variables for filter type configs
 	filterType := utils.FindFilterTypeByName(model.FilterTypes, filter.Type)
 	if filterType != nil {
 		for _, config := range filterType.Configs {
@@ -138,7 +133,6 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 				value = fmt.Sprintf("%v", config.Default)
 			}
 			if config.File {
-				// Handle file-based config by finding the absolute path
 				filePath := filepath.Join(baseDir, value)
 				absoluteFilePath, err := filepath.Abs(filePath)
 				if err != nil {
@@ -150,7 +144,6 @@ func createDockerComposeService(model *models.Model, filter models.Filter, image
 				volumes = append(volumes, volumeName)
 				volumeMounts = append(volumeMounts, fmt.Sprintf("%s:/etc/config/criteria", absoluteFilePath))
 
-				// Update the value to point to the new mount path
 				value = "/etc/config/criteria"
 			}
 

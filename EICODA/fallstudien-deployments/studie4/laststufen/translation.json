@@ -1,0 +1,4 @@
+{
+    "newProductName": "message.data.product & 'EU'",
+    "taxes": "message.data.price * 0.19"
+}

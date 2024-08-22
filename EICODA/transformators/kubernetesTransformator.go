@@ -11,10 +11,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// KubernetesTransformator is responsible for transforming the model to Kubernetes format
 type KubernetesTransformator struct{}
 
-// Transform transforms the model to Kubernetes format and optionally writes to a file
 func (t *KubernetesTransformator) Transform(model *models.Model, writeFile bool, baseDir string) (string, error) {
 	var resources []interface{}
 
@@ -43,7 +41,7 @@ func (t *KubernetesTransformator) Transform(model *models.Model, writeFile bool,
 		}
 	}
 
-	// Write to file if writeFile is true
+	//write to file if writeFile is true
 	if writeFile {
 		outputPath := filepath.Join(".", "kubernetesModel.yaml")
 		err := os.WriteFile(outputPath, []byte(sb.String()), 0644)
@@ -67,14 +65,14 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 			pipeMapping := parts[1]
 			var pipeName, routingKey string
 
-			// Check if the mapping has a routing key defined with "->"
+			//check if the mapping has a routing key
 			if strings.Contains(pipeMapping, "->") {
 				pipeParts := strings.Split(pipeMapping, "->")
 				if len(pipeParts) == 2 {
 					pipeName = pipeParts[0]
 					routingKey = pipeParts[1]
 				} else {
-					pipeName = pipeMapping // Fallback in case of incorrect formatting
+					pipeName = pipeMapping
 				}
 			} else {
 				pipeName = pipeMapping
@@ -84,14 +82,12 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 			var pipeHost *models.Host
 			var pipeProtocol string
 
-			// Check if it's a queue
 			queue := utils.FindQueueByName(model.Pipes.Queues, pipeName)
 			if queue != nil {
 				pipeType = "queue"
 				pipeHost = utils.FindHostByName(model.Hosts.PipeHosts, queue.Host)
 				pipeProtocol = queue.Protocol
 			} else {
-				// If not a queue, it must be a topic
 				topic := utils.FindTopicByName(model.Pipes.Topics, pipeName)
 				if topic != nil {
 					pipeType = "topic"
@@ -107,17 +103,15 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 					pipeHost.AdditionalProps["password"],
 					strings.ToLower(pipeHost.Type),
 					pipeHost.AdditionalProps["messaging_port"],
-					pipeName,   // add the pipe name
-					pipeType,   // add the pipe type (queue or topic)
+					pipeName,
+					pipeType,
 				)
 
-				// Set the environment variable for the pipe name (e.g., "in": "reutlingenPipe")
 				envVars = append(envVars, map[string]interface{}{
 					"name":  parts[0],
 					"value": value,
 				})
 
-				// Set the routingKey environment variable if defined
 				if routingKey != "" {
 					envVars = append(envVars, map[string]interface{}{
 						"name":  fmt.Sprintf("%sRoutingKey", parts[0]),
@@ -128,7 +122,6 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 		}
 	}
 
-	// Add environment variables for filter type configs
 	filterType := utils.FindFilterTypeByName(model.FilterTypes, filter.Type)
 	var configMap map[string]interface{}
 	if filterType != nil {
@@ -138,7 +131,6 @@ func createKubernetesDeployment(model *models.Model, filter models.Filter, image
 				value = fmt.Sprintf("%v", config.Default)
 			}
 			if config.File {
-				// Handle file-based config
 				filePath := filepath.Join(baseDir, value)
 				fileContent, err := os.ReadFile(filePath)
 				if err != nil {

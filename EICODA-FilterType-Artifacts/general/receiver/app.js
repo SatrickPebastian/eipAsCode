@@ -1,7 +1,6 @@
 const amqp = require('amqplib/callback_api');
 const process = require('process');
 
-// Load environment variables
 const [pipeAddress, pipe, pipeType] = process.env.in.split(',');
 const inRoutingKey = process.env.inRoutingKey || '#';
 

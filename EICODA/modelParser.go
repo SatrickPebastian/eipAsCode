@@ -10,22 +10,20 @@ import (
 
 	"gopkg.in/yaml.v2"
 	"eicoda/models"
-	"eicoda/utils" // Ensure this import is included
+	"eicoda/utils"
 )
 
-// ModelParser handles parsing of deployment configuration files
 type ModelParser struct {
 	hostTypes models.HostTypes
 }
 
-// NewModelParser creates a new instance of ModelParser
 func NewModelParser() *ModelParser {
 	parser := &ModelParser{}
 	parser.loadHostTypes()
 	return parser
 }
 
-// loadHostTypes loads the host types from the hostTypes.yaml file
+//loads hostTypes from /repositoryControllers/hostTypes.yaml to include persisted host types
 func (parser *ModelParser) loadHostTypes() {
 	data, err := ioutil.ReadFile(filepath.Join("repositoryControllers", "hostTypes.yaml"))
 	if err != nil {
@@ -44,7 +42,6 @@ func (parser *ModelParser) loadHostTypes() {
 	fmt.Println("Loaded host types.")
 }
 
-// Parse parses the YAML file at the given path and returns a merged Model
 func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -54,13 +51,11 @@ func (parser *ModelParser) Parse(path string) (*models.Model, error) {
 	return parser.parseData(data)
 }
 
-// ParseFromString parses the YAML content from a string and returns a merged Model
 func (parser *ModelParser) ParseFromString(content string) (*models.Model, error) {
 	data := []byte(content)
 	return parser.parseData(data)
 }
 
-// parseData parses the YAML data and returns a merged Model
 func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 	var model models.Model
 	err := yaml.Unmarshal(data, &model)
@@ -90,6 +85,7 @@ func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 		return nil, fmt.Errorf("failed to parse types file: %w", err)
 	}
 
+	//resolves inheritance structure
 	parser.resolveInheritance(&combinedTypes)
 
 	err = parser.mergeModels(&model, &combinedTypes)
@@ -116,9 +112,9 @@ func (parser *ModelParser) parseData(data []byte) (*models.Model, error) {
 	return &model, nil
 }
 
-// mergeModels merges the parsed model with the loaded types and artifacts
 func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *models.CombinedTypes) error {
-	// Merge FilterTypes
+	
+	//merge filtertypes (defined and persisted ones)
 	filterTypeNames := make(map[string]bool)
 	for _, ft := range model.FilterTypes {
 		filterTypeNames[ft.Name] = true
@@ -133,7 +129,7 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 		model.FilterTypes = append(model.FilterTypes, ft)
 	}
 
-	// Merge DeploymentArtifacts
+	// merge deploymentartifacts (defined and persisted ones)
 	deploymentArtifactNames := make(map[string]bool)
 	for _, da := range model.DeploymentArtifacts {
 		deploymentArtifactNames[da.Name] = true
@@ -145,7 +141,7 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 		model.DeploymentArtifacts = append(model.DeploymentArtifacts, da)
 	}
 
-	// Merge Hosts
+	//merge hosts (defined and persisted ones)
 	err := parser.mergeHosts(model, &combinedTypes.Hosts)
 	if err != nil {
 		return err
@@ -154,7 +150,6 @@ func (parser *ModelParser) mergeModels(model *models.Model, combinedTypes *model
 	return nil
 }
 
-// mergeHosts merges the hosts from the combined types with those in the model
 func (parser *ModelParser) mergeHosts(model *models.Model, combinedHosts *models.Hosts) error {
 	hostIDs := make(map[string]bool)
 	for _, host := range model.Hosts.PipeHosts {
@@ -180,7 +175,7 @@ func (parser *ModelParser) mergeHosts(model *models.Model, combinedHosts *models
 	return nil
 }
 
-// resolveInheritance resolves the inheritance hierarchy for filter types
+//resolves the inheritance hierarchy for filter types
 func (parser *ModelParser) resolveInheritance(combinedTypes *models.CombinedTypes) {
 	filterTypeMap := make(map[string]*models.FilterType)
 	for i, ft := range combinedTypes.FilterTypes {
@@ -225,7 +220,7 @@ func (parser *ModelParser) inheritFilterTypeProperties(filterTypeMap map[string]
 	}
 }
 
-// checkFilterTypeEnforcements checks if filters have the required properties based on their type
+//checks if filters have the required properties based on their type
 func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) error {
 	filterTypeMap := make(map[string]models.FilterType)
 	for _, ft := range model.FilterTypes {
@@ -274,7 +269,7 @@ func (parser *ModelParser) checkFilterTypeEnforcements(model *models.Model) erro
 	return nil
 }
 
-// applyFilterTypeArtifacts applies artifacts and mappings from filter types if not set in the filter
+//applies artifacts and mappings from filter types if not set in the filter
 func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combinedTypes *models.CombinedTypes) error {
 	filterTypeMap := make(map[string]models.FilterType)
 	for _, ft := range combinedTypes.FilterTypes {
@@ -301,7 +296,7 @@ func (parser *ModelParser) applyFilterTypeArtifacts(model *models.Model, combine
 	return nil
 }
 
-// performChecks performs various correctness checks on the parsed model
+//performs correctness checks on the parsed model
 func (parser *ModelParser) performChecks(model *models.Model) error {
 	err := parser.checkForDuplicateIDs(model)
 	if err != nil {
@@ -336,7 +331,7 @@ func (parser *ModelParser) performChecks(model *models.Model) error {
 	return nil
 }
 
-// checkForDuplicateIDs checks for duplicate IDs across all objects
+//checks for duplicate IDs across all objects
 func (parser *ModelParser) checkForDuplicateIDs(model *models.Model) error {
 	idSet := make(map[string]bool)
 
@@ -378,7 +373,7 @@ func (parser *ModelParser) checkForDuplicateIDs(model *models.Model) error {
 	return nil
 }
 
-// checkQueueHosts checks if the host field of each queue refers to a defined name of a pipeHost
+//checks if the host field of each queue refers to a defined name of a pipeHost
 func (parser *ModelParser) checkQueueHosts(model *models.Model) error {
 	pipeHosts := make(map[string]bool)
 	for _, host := range model.Hosts.PipeHosts {
@@ -400,7 +395,7 @@ func (parser *ModelParser) checkQueueHosts(model *models.Model) error {
 	return nil
 }
 
-// checkQueueProtocols checks if the protocol is either amqp or mqtt
+//checks if the protocol is either amqp or mqtt
 func (parser *ModelParser) checkQueueProtocols(model *models.Model) error {
 	for _, queue := range model.Pipes.Queues {
 		if queue.Protocol != "amqp" && queue.Protocol != "mqtt" {
@@ -415,7 +410,7 @@ func (parser *ModelParser) checkQueueProtocols(model *models.Model) error {
 	return nil
 }
 
-// checkFilterHosts checks if the host field of each filter refers to a defined name of a filterHost
+//checks if the host field of each filter refers to a defined name of a filterHost
 func (parser *ModelParser) checkFilterHosts(model *models.Model) error {
 	filterHosts := make(map[string]bool)
 	for _, host := range model.Hosts.FilterHosts {
@@ -431,7 +426,7 @@ func (parser *ModelParser) checkFilterHosts(model *models.Model) error {
 	return nil
 }
 
-// checkFilterMappings checks if filter mappings are correct based on deployment artifacts
+//checks if filter mappings are correct based on deployment artifacts
 func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedTypes *models.CombinedTypes) error {
 	definedPipes := make(map[string]bool)
 	for _, queue := range model.Pipes.Queues {
@@ -473,7 +468,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 				return fmt.Errorf("mapping target pipe %s not defined in queues or topics", pipeName)
 			}
 
-			// Check if the pipe is a queue or topic
+			//checks if the pipe is a queue or topic
 			queue := utils.FindQueueByName(model.Pipes.Queues, pipeName)
 			topic := utils.FindTopicByName(model.Pipes.Topics, pipeName)
 
@@ -482,7 +477,6 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 			}
 
 			if topic != nil && len(externalParts) > 1 {
-				// Valid routingKey provided for topic
 				continue
 			}
 
@@ -517,7 +511,7 @@ func (parser *ModelParser) checkFilterMappings(model *models.Model, combinedType
 	return nil
 }
 
-// checkHostTypes checks if pipeHosts have type RabbitMQ and filterHosts have type Kubernetes or DockerCompose
+//checks if pipeHosts have type RabbitMQ and filterHosts have type Kubernetes or DockerEngine
 func (parser *ModelParser) checkHostTypes(model *models.Model) error {
 	for _, host := range model.Hosts.PipeHosts {
 		valid := false
@@ -572,7 +566,6 @@ func (parser *ModelParser) checkHostTypes(model *models.Model) error {
 	return nil
 }
 
-// contains checks if a slice contains a specific string
 func contains(slice []string, item string) bool {
 	for _, a := range slice {
 		if a == item {

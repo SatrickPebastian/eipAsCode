@@ -16,21 +16,21 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend1"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a26d
   name: "WebShopBackend2"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 
 - id: 675071fa
   name: "OrderRouter1"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"
@@ -38,8 +38,8 @@ filters:
 - id: 675071f
   name: "OrderRouter2"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"

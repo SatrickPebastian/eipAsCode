@@ -12,17 +12,17 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend"
   host: "devKubernetes"
-  type: "Backend"
-  mappings: ["internalOrdersPipe:OrderQueue"]
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 675071fa
   name: "OrderTranslator"
   host: "devKubernetes"
-  type: "MessageTranslator"
+  type: "Translator"
   criteria: "translation.json"
   mappings: ["in:OrderQueue", "out:TaxQueue"]
 - id: e4a4a657
   name: "TaxProcessor"
   host: "devDockerCompose"
-  type: "Custom"
-  artifact: "TaxProcessorArtifact"
-  mappings: ["taxInput:TaxQueue"]
+  type: "Receiver"
+  mappings: ["in:TaxQueue"]

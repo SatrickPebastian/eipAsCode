@@ -2,7 +2,6 @@ const amqp = require('amqplib/callback_api');
 const fs = require('fs');
 const jsonata = require('jsonata');
 
-// Load environment variables
 const [pipeAddressIn, pipeIn, pipeTypeIn] = process.env.in.split(',');
 const [pipeAddressOut, pipeOut, pipeTypeOut] = process.env.out.split(',');
 const inRoutingKey = process.env.inRoutingKey || '#';
@@ -29,16 +28,16 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       channel.consume(inputQueue, function(msg) {
         const message = JSON.parse(msg.content.toString());
 
-        // Apply JSONata translation to the entire message object
+        // apply jsonata translation to the entire message object
         const transformedData = {};
         for (let [key, expr] of Object.entries(transformationLogic)) {
           const expression = jsonata(expr);
-          transformedData[key] = expression.evaluate(message);  // Evaluate against the whole message
+          transformedData[key] = expression.evaluate(message); 
         }
 
-        // Merge the translated data back into the consumed message
+        // merge translated data back into consumed message
         const translatedMessage = {
-          ...message,  // Preserve CloudEvents specific fields
+          ...message, 
           data: transformedData
         };
 
@@ -53,7 +52,6 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
   });
 });
 
-// Sets up the input pipe (queue or topic)
 function setupInputPipe(channel, pipeIn, pipeTypeIn, callback) {
   if (pipeTypeIn === 'queue') {
     channel.assertQueue(pipeIn);
@@ -72,7 +70,6 @@ function setupInputPipe(channel, pipeIn, pipeTypeIn, callback) {
   }
 }
 
-// Sets up the output pipe (queue or topic)
 function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
   if (pipeTypeOut === 'queue') {
     channel.assertQueue(pipeOut);
@@ -83,7 +80,7 @@ function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
   }
 }
 
-// Sends the message to the correct output pipe
+//sends message to the correct output pipe
 function sendToOutputPipe(channel, pipeOut, pipeTypeOut, message) {
   if (pipeTypeOut === 'queue') {
     channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));

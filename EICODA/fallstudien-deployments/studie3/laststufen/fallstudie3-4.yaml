@@ -16,39 +16,39 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend1"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a26d
   name: "WebShopBackend2"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a26
   name: "WebShopBackend3"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a2
   name: "WebShopBackend4"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a
   name: "WebShopBackend5"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 
 - id: 675071fa
   name: "OrderRouter1"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"
@@ -56,8 +56,8 @@ filters:
 - id: 675071f
   name: "OrderRouter2"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"
@@ -65,8 +65,8 @@ filters:
 - id: 675071jujg
   name: "OrderRouter3"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"
@@ -74,8 +74,8 @@ filters:
 - id: 675071juj
   name: "OrderRouter4"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"
@@ -83,8 +83,8 @@ filters:
 - id: 675071ju
   name: "OrderRouter5"
   host: "devKubernetes"
-  type: "Router"
-  criteria: "bla"
+  type: "FlexRouter"
+  criteria: "routing.json"
   mappings:
     - "in:OrderQueue"
     - "outOne:HighPriceQueue"

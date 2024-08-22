@@ -9,10 +9,8 @@ import (
 	"eicoda/utils"
 )
 
-// RabbitMqTransformator is responsible for transforming the model to Terraform format for RabbitMQ
 type RabbitMqTransformator struct{}
 
-// Transform transforms the model to Terraform format for RabbitMQ and optionally writes to a file
 func (t *RabbitMqTransformator) Transform(model *models.Model, writeFile bool, baseDir string) (string, error) {
 	terraformResources := `
 terraform {
@@ -31,7 +29,6 @@ provider "rabbitmq" {
 }
 `
 
-	// Assuming only one RabbitMQ host for simplicity
 	var endpoint, username, password string
 	for _, host := range model.Hosts.PipeHosts {
 		if host.Type == "RabbitMQ" {
@@ -62,7 +59,6 @@ provider "rabbitmq" {
 		}
 	}
 
-	// Write to file if writeFile is true
 	if writeFile {
 		outputPath := "rabbitMqModel.tf"
 		err := os.WriteFile(outputPath, []byte(terraformResources), 0644)

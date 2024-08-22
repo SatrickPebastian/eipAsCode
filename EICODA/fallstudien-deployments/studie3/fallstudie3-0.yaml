@@ -16,12 +16,13 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend"
   host: "devKubernetes"
-  type: "Backend"
-  mappings: ["internalOrdersPipe:OrderQueue"]
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 675071fa
   name: "OrderRouter"
   host: "devKubernetes"
-  type: "Router"
+  type: "FlexRouter"
   criteria: "routing.json"
   mappings: ["in:OrderQueue", "outOne:HighPriceQueue", "outTwo:LowPriceQueue"]
 - id: e4a4a657

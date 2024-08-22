@@ -9,14 +9,14 @@ import (
 
 var appController *ApplicationController
 
-// rootCmd represents the base command when called without any subcommands
+//when called without any commands
 var rootCmd = &cobra.Command{
-	Use:   "myclientname",
-	Short: "My Client Name is a CLI tool for deploying configurations",
-	Long:  `My Client Name is a CLI tool designed to help you deploy configurations using YAML files.`,
+	Use:   "eicoda",
+	Short: "EICODA is a CLI tool for deploying pipes and filters architectures",
+	Long:  `EICODA is a CLI tool designed to help you deploy pipes and filters architecture configurations using YAML files.`,
 }
 
-// deployCmd represents the deploy command
+//start deploy process
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy a configuration",
@@ -24,19 +24,20 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := cmd.Flags().GetString("path")
 		measure, _ := cmd.Flags().GetBool("measure")
+		noTf, _ := cmd.Flags().GetBool("no-tf")
 		if path == "" {
 			fmt.Println("Path to the deployment YAML file is required.")
 			return
 		}
-		// Use the ApplicationController to handle the deployment
-		err := appController.Deploy(path, measure)
+		
+		err := appController.Deploy(path, measure, noTf)
 		if err != nil {
 			fmt.Printf("Deployment failed: %v\n", err)
 		}
 	},
 }
 
-// addTypeCmd represents the add type command
+//add types to persist them in /repositoryControllers/types.yaml or /repositoryControllers/hostTypes.yaml files
 var addTypeCmd = &cobra.Command{
 	Use:   "add type",
 	Short: "Add a filter type",
@@ -47,7 +48,7 @@ var addTypeCmd = &cobra.Command{
 			fmt.Println("Path to the filter type YAML file is required.")
 			return
 		}
-		// Use the ApplicationController to handle adding the filter type
+		
 		err := appController.typeController.AddType(path)
 		if err != nil {
 			fmt.Printf("Adding filter type failed: %v\n", err)
@@ -76,6 +77,7 @@ var processCmd = &cobra.Command{
 	},
 }
 
+//destroy deployed resources. Uses files that are in kubernetesModel.yaml, rabbitMqModel.yaml and docker-compose.yaml relative to the eicoda binary
 var destroyCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "Destroy a deployment",
@@ -97,10 +99,10 @@ func init() {
 	rootCmd.AddCommand(processCmd)
 	rootCmd.AddCommand(destroyCmd)
 
-	// Define flags and configuration settings
 	deployCmd.Flags().StringP("path", "p", "", "Path to the deployment YAML file")
 	deployCmd.MarkFlagRequired("path")
 	deployCmd.Flags().BoolP("measure", "m", false, "Measure the deployment performance")
+	deployCmd.Flags().Bool("no-tf", false, "Skip Terraform-related actions during deployment")
 
 	addTypeCmd.Flags().StringP("path", "p", "", "Path to the filter type YAML file")
 	addTypeCmd.MarkFlagRequired("path")

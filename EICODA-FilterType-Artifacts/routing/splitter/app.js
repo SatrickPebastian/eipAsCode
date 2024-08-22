@@ -1,7 +1,6 @@
 const amqp = require('amqplib/callback_api');
 const process = require('process');
 
-// Load environment variables
 const [pipeAddressIn, pipeIn, pipeTypeIn] = process.env.in.split(',');
 const [pipeAddressOut, pipeOut, pipeTypeOut] = process.env.out.split(',');
 const inRoutingKey = process.env.inRoutingKey || '#';
@@ -28,17 +27,15 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       channel.consume(inputQueue, function(msg) {
         const message = JSON.parse(msg.content.toString());
 
-        // Check each field in message.data if it is contained in dataToSplit env var
         dataToSplit.forEach(field => {
           if (message.data && field in message.data) {
-            // Create new CloudEvent messages for every match
             const cloudEventMessage = {
               specversion: '1.0',
               id: `id-${Math.random()}`,
               source: source,
               type: type,
               time: new Date().toISOString(),
-              data: { [field]: message.data[field] } // Extract only the correct data field
+              data: { [field]: message.data[field] }
             };
 
             sendToOutputPipe(channel, pipeOut, pipeTypeOut, cloudEventMessage);

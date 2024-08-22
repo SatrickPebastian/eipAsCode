@@ -8,27 +8,31 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend1"
   host: "devKubernetes"
-  type: "Backend"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
   mappings:
-    - "internalOrdersPipe:OrderQueue"
+    - "out:OrderQueue"
 - id: 577a26d
   name: "WebShopBackend2"
   host: "devKubernetes"
-  type: "Backend"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
   mappings:
-    - "internalOrdersPipe:OrderQueue"
+    - "out:OrderQueue"
 - id: 577a26
   name: "WebShopBackend3"
   host: "devKubernetes"
-  type: "Backend"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
   mappings:
-    - "internalOrdersPipe:OrderQueue"
+    - "out:OrderQueue"
 - id: 577a2
   name: "WebShopBackend4"
   host: "devKubernetes"
-  type: "Backend"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
   mappings:
-    - "internalOrdersPipe:OrderQueue"
+    - "out:OrderQueue"
 
 - id: e4a4a657
   name: "OrderProcessor1"

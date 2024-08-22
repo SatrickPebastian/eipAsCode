@@ -1,7 +1,6 @@
 const amqp = require('amqplib/callback_api');
 const fs = require('fs');
 
-// Load environment variables
 const [pipeAddressIn, inPipe, pipeTypeIn] = process.env.in.split(',');
 const [pipeAddressOutOne, outOnePipe, pipeTypeOutOne] = process.env.outOne.split(',');
 const [pipeAddressOutTwo, outTwoPipe, pipeTypeOutTwo] = process.env.outTwo.split(',');
@@ -9,10 +8,10 @@ const inRoutingKey = process.env.inRoutingKey || '#';
 const outOneRoutingKey = process.env.outOneRoutingKey || '';
 const outTwoRoutingKey = process.env.outTwoRoutingKey || '';
 
-// Determines if the router should process messages as content-based router ('single') or recipient list ('multiple')
+// content-based Router --> single
+// recipient list --> multiple
 const mode = process.env.mode;
 
-// Criterias implicitly determine output pipes
 const criteriaPath = '/etc/config/criteria';
 const routingLogic = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
 
@@ -26,9 +25,7 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       throw error1;
     }
 
-    // Setup the input pipe (queue or topic)
     setupInputPipe(channel, inPipe, pipeTypeIn, inRoutingKey, function(inputQueue) {
-      // Setup the output pipes (queues or topics)
       setupOutputPipe(channel, outOnePipe, pipeTypeOutOne);
       setupOutputPipe(channel, outTwoPipe, pipeTypeOutTwo);
 
@@ -38,7 +35,6 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
         const message = JSON.parse(msg.content.toString());
 
         if (mode === 'single') {
-          // Send to the first matching destination
           const destination = routeMessageSingle(message);
           if (destination) {
             sendToDestination(channel, destination, message);
@@ -47,7 +43,6 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
             sendToDestination(channel, routingLogic.default, message);
           }
         } else if (mode === 'multiple') {
-          // Send to all matching destinations
           const destinations = routeMessageMultiple(message);
           if (destinations.length > 0) {
             destinations.forEach(destination => {

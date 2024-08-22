@@ -58,14 +58,13 @@ ipcMain.handle('deploy-from-ui', async (event, modelContent) => {
   const deploymentFilePath = path.join(eicodaWorkingDir, 'ui-deployment.yaml');
 
   return new Promise((resolve, reject) => {
-    // Write the model content to ui-deployment.yaml
+    //writes content of model to ui-deployment.yaml relative to eicoda binary
     fs.writeFile(deploymentFilePath, modelContent, (err) => {
       if (err) {
         reject(`Failed to write deployment file: ${err}`);
         return;
       }
 
-      // Execute the CLI deploy command
       const child = execFile(eicodaPath, ['deploy', '--path', deploymentFilePath], { cwd: eicodaWorkingDir }, (error, stdout, stderr) => {
         if (error) {
           reject(stderr);

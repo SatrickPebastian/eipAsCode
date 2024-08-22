@@ -1,0 +1,33 @@
+filterTypes:
+- name: Backend
+  artifact: BackendContainer
+
+deploymentArtifacts:
+- name: BackendContainer
+  image: pstopper/backend-container:latest
+  type: Docker
+  internalPipes: ["internalOrdersPipe"]
+- name: TaxProcessorArtifact
+  image: pstopper/tax-processor:latest
+  type: Docker
+  internalPipes: ["taxInput"]
+
+hosts:
+  pipeHosts:
+    - id: b8156cf9
+      name: "devRabbitMQ"
+      type: "RabbitMQ"
+      username: admin
+      password: password
+      messaging_port: 5672
+      management_port: 15672
+      host_address: localhost
+  filterHosts:
+    - id: 4d2c94eebf
+      name: "devKubernetes"
+      type: "Kubernetes"
+      kubeConfig: "C:/Users/pstopper/.kube/config"
+      cluster: "minikube"
+    - id: ebe07dd4
+      name: "devDockerCompose"
+      type: "DockerEngine"

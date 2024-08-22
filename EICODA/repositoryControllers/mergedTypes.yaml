@@ -12,6 +12,8 @@ filterTypes:
     default: /default/source
 - name: Receiver
   artifact: ReceiverArtifact
+- name: Logger
+  artifact: LoggerArtifact
 - name: Custom
 - name: FlexRouter
   artifact: FlexRouterArtifact
@@ -33,6 +35,7 @@ filterTypes:
   - name: source
     default: /default/source
 - name: Aggregator
+  artifact: AggregatorArtifact
   configs:
   - name: data
   - name: count

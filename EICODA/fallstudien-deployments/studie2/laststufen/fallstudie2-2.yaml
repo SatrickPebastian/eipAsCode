@@ -12,43 +12,43 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend1"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a26d
   name: "WebShopBackend2"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 577a26
   name: "WebShopBackend3"
   host: "devKubernetes"
-  type: "Backend"
-  mappings:
-    - "internalOrdersPipe:OrderQueue"
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 
 - id: 675071fa
   name: "OrderTranslator1"
   host: "devKubernetes"
-  type: "MessageTranslator"
-  criteria: "bla"
+  type: "Translator"
+  criteria: "translation.json"
   mappings:
     - "in:OrderQueue"
     - "out:TaxQueue"
 - id: 675071f
   name: "OrderTranslator2"
   host: "devKubernetes"
-  type: "MessageTranslator"
-  criteria: "bla"
+  type: "Translator"
+  criteria: "translation.json"
   mappings:
     - "in:OrderQueue"
     - "out:TaxQueue"
 - id: 675071z
   name: "OrderTranslator3"
   host: "devKubernetes"
-  type: "MessageTranslator"
-  criteria: "bla"
+  type: "Translator"
+  criteria: "translation.json"
   mappings:
     - "in:OrderQueue"
     - "out:TaxQueue"

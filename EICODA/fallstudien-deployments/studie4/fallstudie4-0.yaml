@@ -21,29 +21,29 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend"
   host: "devKubernetes"
-  type: "Backend"
-  mappings: ["internalOrdersPipe:OrderQueue"]
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: 675071fa
   name: "OrderTranslator"
   host: "devKubernetes"
-  type: "MessageTranslator"
+  type: "Translator"
   criteria: "translation.json"
   mappings: ["in:OrderQueue", "out:TranslatedTopic"]
 - id: e4a4a657
   name: "InvoiceRequestorA"
   host: "devKubernetes"
-  type: "MessageTranslator"
-  criteria: "bla"
+  type: "Logger"
   mappings: ["in:TranslatedTopic", "out:InvoiceQueue"]
 - id: e4a4sadaf
   name: "InvoiceRequestorB"
   host: "devKubernetes"
-  type: "MessageTranslator"
-  criteria: "bla"
+  type: "Logger"
   mappings: ["in:TranslatedTopic", "out:InvoiceQueue"]
 - id: e4a4a6yxg
   name: "InvoiceAggregator"
   host: "devDockerCompose"
-  type: "MessageTranslator"
-  criteria: "routing.json"
+  type: "Aggregator"
+  count: 2
+  data: "message.data.product,message.data.price"
   mappings: ["in:InvoiceQueue", "out:ResultQueue"]

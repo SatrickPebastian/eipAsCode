@@ -10,30 +10,28 @@ import (
 	"eicoda/models"
 )
 
-// CombinedTypes represents the structure of the combined types and artifacts YAML file
+//represents the structure of the combined types and artifacts YAML file
 type CombinedTypes struct {
 	FilterTypes         []models.FilterType         `yaml:"filterTypes"`
 	DeploymentArtifacts []models.DeploymentArtifact `yaml:"deploymentArtifacts"`
 	Hosts               models.Hosts                `yaml:"hosts"`
 }
 
-// TypeController handles operations related to filter types and artifacts
+// handles operations related to filter types and artifacts
 type TypeController struct {
 	filterTypes         []models.FilterType
 	deploymentArtifacts []models.DeploymentArtifact
 	hosts               models.Hosts
 }
 
-// NewTypeController creates a new instance of TypeController and loads the initial data
 func NewTypeController() *TypeController {
 	tc := &TypeController{}
 	tc.loadInitialData()
 	return tc
 }
 
-// loadInitialData loads the types.yaml file
+//loads the types.yaml file
 func (tc *TypeController) loadInitialData() {
-	// Load types.yaml
 	typesPath := filepath.Join("repositoryControllers", "types.yaml")
 	typesData, err := ioutil.ReadFile(typesPath)
 	if err != nil {
@@ -51,7 +49,7 @@ func (tc *TypeController) loadInitialData() {
 	tc.hosts = combinedTypes.Hosts
 }
 
-// AddType reads the new types YAML file, validates the filter types and artifacts, and merges them with the existing types
+//reads the new types YAML file, validates the filter types and artifacts, and merges them with the existing types
 func (tc *TypeController) AddType(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -65,40 +63,32 @@ func (tc *TypeController) AddType(path string) error {
 		return fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
-	// Validate and merge the filter types
 	for _, filterType := range newCombinedTypes.FilterTypes {
 		if err := validateFilterType(filterType); err != nil {
 			return fmt.Errorf("validation failed: %w", err)
 		}
 
-		// Check for duplicates
 		for _, existingType := range tc.filterTypes {
 			if existingType.Name == filterType.Name {
 				return fmt.Errorf("duplicate filter type name found: %s", filterType.Name)
 			}
 		}
 
-		// Add new type to the existing filter types
 		tc.filterTypes = append(tc.filterTypes, filterType)
 	}
 
-	// Validate and merge the deployment artifacts
 	for _, artifact := range newCombinedTypes.DeploymentArtifacts {
-		// Check for duplicates
 		for _, existingArtifact := range tc.deploymentArtifacts {
 			if existingArtifact.Name == artifact.Name {
 				return fmt.Errorf("duplicate deployment artifact name found: %s", artifact.Name)
 			}
 		}
 
-		// Add new artifact to the existing deployment artifacts
 		tc.deploymentArtifacts = append(tc.deploymentArtifacts, artifact)
 	}
 
-	// Merge hosts
 	tc.mergeHosts(newCombinedTypes.Hosts)
 
-	// Check for artifact validity
 	for _, filterType := range tc.filterTypes {
 		if filterType.Artifact != "" {
 			if !tc.isValidArtifact(filterType.Artifact) {
@@ -107,13 +97,11 @@ func (tc *TypeController) AddType(path string) error {
 		}
 	}
 
-	// Persist merged types, artifacts, and hosts to mergedTypes.yaml
 	err = tc.saveMergedTypes()
 	if err != nil {
 		return fmt.Errorf("failed to save merged types: %w", err)
 	}
 
-	// Print merged filter types, artifacts, and hosts in a readable format
 	combinedTypes := CombinedTypes{
 		FilterTypes:         tc.filterTypes,
 		DeploymentArtifacts: tc.deploymentArtifacts,
@@ -129,16 +117,14 @@ func (tc *TypeController) AddType(path string) error {
 	return nil
 }
 
-// mergeHosts merges the new hosts with the existing ones, avoiding duplicates
+//merges the new hosts with the existing ones, avoiding duplicates
 func (tc *TypeController) mergeHosts(newHosts models.Hosts) {
-	// Merge PipeHosts
 	for _, newHost := range newHosts.PipeHosts {
 		if !tc.hostExists(newHost, tc.hosts.PipeHosts) {
 			tc.hosts.PipeHosts = append(tc.hosts.PipeHosts, newHost)
 		}
 	}
 
-	// Merge FilterHosts
 	for _, newHost := range newHosts.FilterHosts {
 		if !tc.hostExists(newHost, tc.hosts.FilterHosts) {
 			tc.hosts.FilterHosts = append(tc.hosts.FilterHosts, newHost)
@@ -146,7 +132,7 @@ func (tc *TypeController) mergeHosts(newHosts models.Hosts) {
 	}
 }
 
-// hostExists checks if a host already exists in the given slice of hosts
+// checks if a host already exists in the given slice of hosts
 func (tc *TypeController) hostExists(newHost models.Host, existingHosts []models.Host) bool {
 	for _, host := range existingHosts {
 		if host.ID == newHost.ID {
@@ -156,7 +142,7 @@ func (tc *TypeController) hostExists(newHost models.Host, existingHosts []models
 	return false
 }
 
-// validateFilterType validates the structure of a filter type
+//validates the structure of a filter type
 func validateFilterType(ft models.FilterType) error {
 	if ft.Name == "" {
 		return fmt.Errorf("name is required")
@@ -173,7 +159,7 @@ func validateFilterType(ft models.FilterType) error {
 	return nil
 }
 
-// isValidArtifact checks if the artifact is valid
+//checks if the artifact is valid
 func (tc *TypeController) isValidArtifact(artifact string) bool {
 	for _, da := range tc.deploymentArtifacts {
 		if da.Name == artifact {
@@ -183,7 +169,7 @@ func (tc *TypeController) isValidArtifact(artifact string) bool {
 	return false
 }
 
-// saveMergedTypes saves the merged filter types, deployment artifacts, and hosts to mergedTypes.yaml
+// saves the merged filter types, deployment artifacts, and hosts to mergedTypes.yaml
 func (tc *TypeController) saveMergedTypes() error {
 	mergedTypesFile := CombinedTypes{
 		FilterTypes:         tc.filterTypes,

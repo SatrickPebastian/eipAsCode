@@ -2,8 +2,8 @@
     "criterias": [
         {
             "condition": "message.data.price >= 500",
-            "destination": "outOne"
+            "destination": "HighPricePipe"
         }
     ],
-    "default": "outTwo"
+    "default": "LowPricePipe"
 }

@@ -101,7 +101,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   
     function displayOutput(output) {
-      outputContainer.innerHTML = ''; // Clear any existing content
+      outputContainer.innerHTML = '';
   
       if (output.includes('Successfully transformed and deployed model.')) {
         displaySuccess(output);

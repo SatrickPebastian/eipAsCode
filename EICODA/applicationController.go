@@ -11,7 +11,6 @@ import (
 	"eicoda/transformators"
 )
 
-// ApplicationController is the central part of the system managing all components
 type ApplicationController struct {
 	modelParser    *ModelParser
 	transformators map[string]Transformator
@@ -19,7 +18,6 @@ type ApplicationController struct {
 	typeController *repositoryControllers.TypeController
 }
 
-// NewApplicationController creates a new instance of ApplicationController
 func NewApplicationController() *ApplicationController {
 	return &ApplicationController{
 		modelParser: NewModelParser(),
@@ -37,8 +35,8 @@ func NewApplicationController() *ApplicationController {
 	}
 }
 
-// Deploy handles the deployment process
-func (app *ApplicationController) Deploy(path string, measure bool) error {
+//handles deployment process
+func (app *ApplicationController) Deploy(path string, measure bool, noTf bool) error {
 	var startTime, parseTransformTime, endTime time.Time
 
 	if measure {
@@ -51,28 +49,28 @@ func (app *ApplicationController) Deploy(path string, measure bool) error {
 		return fmt.Errorf("failed to parse model: %w", err)
 	}
 
-	// Pfad von deployment file ausgeben um Pfad an Transformatoren übergeben, sodass diese im gleichen File nach criteria-files suchen können
+	//gets dir of the deployment file to pass it to transformators so that they know where to look for the critera files (if there are any)
 	baseDir := filepath.Dir(path)
 
 	fmt.Println("Transforming model...")
-	if err := app.transformModel(model, baseDir); err != nil {
+	if err := app.transformModel(model, baseDir, noTf); err != nil {
 		return err
 	}
 
-	// Erste Zeitmessung nach Parsing und Transformation
+	//measures times after parsing and transformation if flag is set
 	if measure {
 		parseTransformTime = time.Now()
 		fmt.Printf("TIME TO PARSE AND TRANSFORM: %v\n", parseTransformTime.Sub(startTime))
 	}
 
 	fmt.Println("Executing plugins...")
-	if err := app.executePlugins(model); err != nil {
+	if err := app.executePlugins(model, noTf); err != nil {
 		return err
 	}
 
-	fmt.Printf("Successfully transformed and deployed model.")
-  
-	//Zweite Zeitmessung nachdem Deployment komplett durchgelaufen ist
+	fmt.Println("Successfully transformed and deployed model.")
+
+	//measures time after entire deployment is complete (if flag is set)
 	if measure {
 		endTime = time.Now()
 		fmt.Printf("OVERALL DEPLOYMENT TIME: %v\n", endTime.Sub(startTime))
@@ -81,7 +79,7 @@ func (app *ApplicationController) Deploy(path string, measure bool) error {
 	return nil
 }
 
-// Destroy handles the destruction process
+//handles destruction process
 func (app *ApplicationController) Destroy() error {
 	fmt.Println("Starting destruction process...")
 
@@ -104,7 +102,6 @@ func (app *ApplicationController) Destroy() error {
 	return nil
 }
 
-// ProcessModel handles the transformation and returns the transformed models
 func (app *ApplicationController) ProcessModel(content string) ([]string, error) {
 	fmt.Println("Processing model content...")
 	model, err := app.modelParser.ParseFromString(content)
@@ -114,7 +111,6 @@ func (app *ApplicationController) ProcessModel(content string) ([]string, error)
 
 	var results []string
 
-	// Pfad von deployment file ausgeben um Pfad an Transformatoren übergeben, sodass diese im gleichen File nach criteria-files suchen können
 	baseDir := filepath.Dir(".")
 
 	fmt.Println("Transforming model with appropriate transformators...")
@@ -129,7 +125,7 @@ func (app *ApplicationController) ProcessModel(content string) ([]string, error)
 	return results, nil
 }
 
-func (app *ApplicationController) transformModel(model *models.Model, baseDir string) error {
+func (app *ApplicationController) transformModel(model *models.Model, baseDir string, noTf bool) error {
 	fmt.Println("Checking if transformation for DockerCompose is needed...")
 	if app.shouldTransformDockerCompose(model) {
 		fmt.Println("Transforming model for DockerCompose...")
@@ -144,22 +140,30 @@ func (app *ApplicationController) transformModel(model *models.Model, baseDir st
 			return fmt.Errorf("failed to transform model with Kubernetes: %w", err)
 		}
 	}
-	fmt.Println("Checking if transformation for RabbitMQ is needed...")
-	if app.shouldTransformRabbitMQ(model) {
-		fmt.Println("Transforming model for RabbitMQ...")
-		if _, err := app.transformators["RabbitMQ"].Transform(model, true, baseDir); err != nil {
-			return fmt.Errorf("failed to transform model with RabbitMQ: %w", err)
+	if !noTf {
+		fmt.Println("Checking if transformation for RabbitMQ is needed...")
+		if app.shouldTransformRabbitMQ(model) {
+			fmt.Println("Transforming model for RabbitMQ...")
+			if _, err := app.transformators["RabbitMQ"].Transform(model, true, baseDir); err != nil {
+				return fmt.Errorf("failed to transform model with RabbitMQ: %w", err)
+			}
 		}
+	} else {
+		fmt.Println("Skipping Terraform transformations as --no-tf flag is set.")
 	}
 	return nil
 }
 
-func (app *ApplicationController) executePlugins(model *models.Model) error {
-	fmt.Println("Executing Terraform plugin if needed...")
-	if app.shouldTransformRabbitMQ(model) {
-		if err := app.plugins["Terraform"].Execute(); err != nil {
-			return fmt.Errorf("Terraform plugin execution failed: %w", err)
+func (app *ApplicationController) executePlugins(model *models.Model, noTf bool) error {
+	if !noTf {
+		fmt.Println("Executing Terraform plugin if needed...")
+		if app.shouldTransformRabbitMQ(model) {
+			if err := app.plugins["Terraform"].Execute(); err != nil {
+				return fmt.Errorf("Terraform plugin execution failed: %w", err)
+			}
 		}
+	} else {
+		fmt.Println("Skipping Terraform plugin execution as --no-tf flag is set.")
 	}
 	fmt.Println("Executing Kubernetes plugin if needed...")
 	if app.shouldTransformKubernetes(model) {
@@ -215,13 +219,12 @@ func (app *ApplicationController) shouldTransformRabbitMQ(model *models.Model) b
 	return false
 }
 
-// Plugin defines the interface for all plugins
+//defines necessary interface of plugins
 type Plugin interface {
 	Execute() error
 	Destroy() error
 }
 
-// AddType handles adding a new filter type
 func (app *ApplicationController) AddType(path string) error {
 	return app.typeController.AddType(path)
 }

@@ -1,7 +1,6 @@
 const amqp = require('amqplib/callback_api');
 const process = require('process');
 
-// Load environment variables
 const interval = parseInt(process.env.interval, 10);
 const [pipeAddress, pipe, pipeType] = process.env.out.split(',');
 const outRoutingKey = process.env.outRoutingKey || '';
@@ -31,7 +30,7 @@ amqp.connect(pipeAddress, function(error0, connection) {
       channel.assertQueue(pipe);
 
       const sendMessage = () => {
-        // Create a new CloudEvent message each time sendMessage is called
+        // Create a new CloudEvent message for each call
         const cloudEventMessage = {
           specversion: '1.0',
           id: `id-${Math.random()}`,
@@ -50,7 +49,7 @@ amqp.connect(pipeAddress, function(error0, connection) {
       channel.assertExchange(pipe, 'topic');
 
       const sendMessage = () => {
-        // Create a new CloudEvent message each time sendMessage is called
+        // Create a new CloudEvent message
         const cloudEventMessage = {
           specversion: '1.0',
           id: `id-${Math.random()}`,

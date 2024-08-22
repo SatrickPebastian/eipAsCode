@@ -1,0 +1,4 @@
+{
+    "taxes": "message.data.price * 0.19",
+    "averageRatings": "$average(message.data.ratings)"
+}

@@ -8,10 +8,11 @@ filters:
 - id: 577a26d2
   name: "WebShopBackend"
   host: "devKubernetes"
-  type: "Backend"
-  mappings: ["internalOrdersPipe:OrderQueue"]
+  type: "Sender"
+  data: '{"product": "keyboard", "price": "499"}'
+  mappings: ["out:OrderQueue"]
 - id: e4a4a657
   name: "OrderProcessor"
-  host: "devKubernetes"
+  host: "devDockerCompose"
   type: "Receiver"
   mappings: ["in:OrderQueue"]
