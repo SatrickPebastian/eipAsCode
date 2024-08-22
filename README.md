@@ -14,9 +14,7 @@ Zweitbetreuer: Prof. Dr. Christian Decker
   - **`/fallstudien-deployments/laststufen/fallstudieX-X.yaml`**: Enthält die jeweiligen Variationen der Standardfallstudie je nach Laststufe.
   - `setup.yaml`: Enthält das verwendete Setup für die Hosts und Filtertypen.
 
-## Enthaltene Projekte
-
-### EICODA (Verzeichnis: `EICODA`)
+## EICODA (Verzeichnis: `EICODA`)
 
 Enthält das EICODA-Deploymentsystem und die dazugehörige CLI.
 
@@ -44,13 +42,13 @@ Enthält das EICODA-Deploymentsystem und die dazugehörige CLI.
   - **`eicoda destroy`**  
     Baut alle Ressourcen ab, die in den Dateien `kubernetesModel.yaml`, `rabbitMqModel.yaml` und `docker-compose.yaml` relativ zur EICODA-Binary enthalten sind.
 
-### EICODA Benutzeroberfläche (Verzeichnis: `EICODA-UI`)
+## EICODA Benutzeroberfläche (Verzeichnis: `EICODA-UI`)
 
 Enthält den Code für die EICODA-GUI.
 
 - Das Projekt kann gestartet werden, indem man in das Verzeichnis `EICODA-UI` wechselt und den Befehl `npm start` ausführt. (Beim ersten Ausführen muss zunächst `npm install` ausgeführt werden!)
 
-### Vorimplementierte Deployment-Artefakte (Verzeichnis: `EICODA-FilterType-Artifacts`)
+## Vorimplementierte Deployment-Artefakte (Verzeichnis: `EICODA-FilterType-Artifacts`)
 
 Enthält die in EICODA vorimplementierten Deployment-Artefakte.
 
