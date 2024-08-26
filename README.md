@@ -71,7 +71,12 @@ Enthält die in EICODA vorimplementierten Deployment-Artefakte.
   - Translator: `pstopper/eicoda-translator:latest`
   - ContentFilter: `pstopper/eicoda-contentfilter:latest`
 
-In dem Verzeichnis /demo-deployments befinden sich einige kleine Deploymentmodelle, welche die Funktionalitäten der vorimplementierten Filter demonstrieren.
+Im Verzeichnis `/demo-deployments` finden sich einige kleinere Deploymentmodelle, die die Funktionalitäten der vorimplementierten Filter demonstrieren. Diese Modelle bieten eine hervorragende Grundlage, um die verschiedenen Möglichkeiten der Filter zu erkunden und ihre Einsatzmöglichkeiten zu verstehen.
 
-Um existierende Filter Types zu ändern, sodass sie auf andere Docker-Images verweisen, müssen die Deployment Artifacts in der Datei /repositoryControllers/mergedTypes.yaml angepasst werden (Images anpassen), oder es werden neue Filter Types definiert.
-Alternativ kann auch ein Filter vom Typ "Custom" verwendet werden. In diesem Fall muss ein Artifact über das "artifact"-Attribut gesetzt werden.
+### Anpassung bestehender Filtertypen
+
+Um bestehende Filtertypen zu ändern, sodass sie auf andere Docker-Images verweisen, müssen die Deployment-Artefakte in der Datei `/repositoryControllers/mergedTypes.yaml` angepasst werden. Hier können die entsprechenden Images modifiziert oder neue Filtertypen definiert werden.
+
+### Nutzung benutzerdefinierter Filter
+
+Alternativ kann ein benutzerdefinierter Filter vom Typ "Custom" verwendet werden. In diesem Fall muss ein Artifact über das `artifact`-Attribut gesetzt werden, um die gewünschte Funktionalität zu erzielen.
