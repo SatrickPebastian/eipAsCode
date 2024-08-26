@@ -1,0 +1,33 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec
+      name: "resultPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec8e
+      name: "orderPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 577a26d2-216
+    name: "mySender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"price": "499", "order": "keyboard"}'
+    mappings:
+      - "out:orderPipe"
+  - id: 577a26d2-216c-4e6
+    name: "mySplitter"
+    host: "devDockerCompose"
+    type: "Splitter"
+    data: "message.data.price,message.data.order"
+    mappings:
+      - "in:orderPipe"
+      - "out:resultPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808
+    name: "myReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:resultPipe"

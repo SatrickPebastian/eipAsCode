@@ -1,0 +1,7 @@
+{
+  "criterias": [
+    {
+      "condition": "message.data.price >= 5"
+    }
+  ]
+}

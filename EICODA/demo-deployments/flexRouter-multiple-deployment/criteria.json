@@ -1,0 +1,13 @@
+{
+  "criterias": [
+    {
+      "condition": "message.data.greeting === 'Hello World'",
+      "destination": "worldPipe"
+    },
+    {
+      "condition": "message.data.number === 1",
+      "destination": "numberPipe"
+    }
+  ],
+  "default": "worldPipe"
+}

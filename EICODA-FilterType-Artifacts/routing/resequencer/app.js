@@ -71,15 +71,14 @@ function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
 }
 
 function resequenceAndSendMessages(channel) {
-  // Sort buffered messages based on dataToSort field and sortMode
   messageBuffer.sort((a, b) => {
     const aValue = getFieldValue(a, dataToSort);
     const bValue = getFieldValue(b, dataToSort);
     
     if (sortMode === 'desc') {
-      return bValue - aValue;  // Sort in descending order
+      return bValue - aValue; 
     } else {
-      return aValue - bValue;  // Sort in ascending order (default)
+      return aValue - bValue; 
     }
   });
 
@@ -96,7 +95,6 @@ function resequenceAndSendMessages(channel) {
   messageBuffer = [];
 }
 
-// Helper function to get data from nested field
 function getFieldValue(message, field) {
-  return field.split('.').reduce((o, i) => o && o[i], message);
+  return field.split('.').reduce((o, i) => o && o[i], { message });
 }

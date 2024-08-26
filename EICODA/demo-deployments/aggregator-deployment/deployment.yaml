@@ -1,0 +1,55 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec
+      name: "resultPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec8e
+      name: "orderPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 577a26d2-216
+    name: "EinsSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"price": "499", "order": "keyboard"}'
+    mappings:
+      - "out:orderPipe"
+  - id: 577a26d2-216c-4e6
+    name: "zweiSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"price": "499", "order": "keyboard"}'
+    mappings:
+      - "out:orderPipe"
+  - id: 577a26d2-216c-4e6e-95e
+    name: "vierSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"price": "499", "order": "keyboard"}'
+    mappings:
+      - "out:orderPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f83
+    name: "dreiSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"price": "499", "order": "keyboard"}'
+    mappings:
+      - "out:orderPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7
+    name: "myAggregator"
+    host: "devDockerCompose"
+    type: "Aggregator"
+    data: "message.data.price,message.data.order"
+    count: "4"
+    mappings:
+      - "in:orderPipe"
+      - "out:resultPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808
+    name: "myReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:resultPipe"

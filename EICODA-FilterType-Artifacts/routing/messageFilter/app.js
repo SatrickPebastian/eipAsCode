@@ -78,7 +78,6 @@ function handleIncomingMessage(channel, msg) {
   channel.ack(msg);
 }
 
-// Filter message logic
 function filterMessage(message) {
   return filterLogic.criterias.every(rule => eval(rule.condition));
 }

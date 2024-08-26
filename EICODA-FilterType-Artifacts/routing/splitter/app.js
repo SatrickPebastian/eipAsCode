@@ -27,21 +27,24 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       channel.consume(inputQueue, function(msg) {
         const message = JSON.parse(msg.content.toString());
 
-        dataToSplit.forEach(field => {
-          if (message.data && field in message.data) {
+        dataToSplit.forEach(fieldPath => {
+          const fieldValue = getFieldValue(message, fieldPath);
+
+          if (fieldValue !== undefined) {
+            const fieldKey = fieldPath.split('.').pop();
             const cloudEventMessage = {
               specversion: '1.0',
               id: `id-${Math.random()}`,
               source: source,
               type: type,
               time: new Date().toISOString(),
-              data: { [field]: message.data[field] }
+              data: { [fieldKey]: fieldValue }
             };
 
             sendToOutputPipe(channel, pipeOut, pipeTypeOut, cloudEventMessage);
             console.log(`Sent: ${JSON.stringify(cloudEventMessage)} to ${pipeOut}`);
           } else {
-            console.log(`Field "${field}" not found in the incoming message.`);
+            console.log(`Field "${fieldPath}" not found in the incoming message.`);
           }
         });
 
@@ -91,4 +94,9 @@ function sendToOutputPipe(channel, pipeOut, pipeTypeOut, message) {
   } else {
     console.error("Unknown pipe type for output.");
   }
+}
+
+function getFieldValue(obj, fieldPath) {
+  const adjustedPath = fieldPath.replace(/^message\./, '');
+  return adjustedPath.split('.').reduce((o, key) => (o && o[key] !== undefined) ? o[key] : undefined, obj);
 }

@@ -24,10 +24,13 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       channel.consume(inputQueue, function(msg) {
         const message = JSON.parse(msg.content.toString());
 
-        dataToFilter.forEach(field => {
-          deleteNestedField(message.data, field.split('.'));
+        // Filter all specified fields
+        dataToFilter.forEach(fieldPath => {
+          const adjustedPath = fieldPath.trim().replace(/^message\./, '');
+          deleteNestedField(message, adjustedPath.split('.'));
         });
 
+        //send filtered message
         sendToOutputPipe(channel, pipeOut, pipeTypeOut, message);
         console.log("Sent filtered message to %s: %s", pipeOut, JSON.stringify(message));
 
@@ -39,7 +42,6 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
   });
 });
 
-//sets up input pipe (queue or topic)
 function setupInputPipe(channel, pipeIn, pipeTypeIn, callback) {
   if (pipeTypeIn === 'queue') {
     channel.assertQueue(pipeIn);
@@ -58,7 +60,6 @@ function setupInputPipe(channel, pipeIn, pipeTypeIn, callback) {
   }
 }
 
-//sets up output pipe (queue or topic)
 function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
   if (pipeTypeOut === 'queue') {
     channel.assertQueue(pipeOut);
@@ -69,6 +70,7 @@ function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
   }
 }
 
+//send filtered message to output pipe
 function sendToOutputPipe(channel, pipeOut, pipeTypeOut, message) {
   if (pipeTypeOut === 'queue') {
     channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));
@@ -81,7 +83,6 @@ function sendToOutputPipe(channel, pipeOut, pipeTypeOut, message) {
   }
 }
 
-//nested field deletion from object
 function deleteNestedField(obj, fieldPath) {
   if (!obj) return;
 

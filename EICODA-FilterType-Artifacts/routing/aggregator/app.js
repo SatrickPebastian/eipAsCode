@@ -10,7 +10,6 @@ const count = parseInt(process.env.count, 10);
 const source = process.env.source;
 const type = process.env.eventType;
 
-//store messages for aggregation
 let messageBuffer = [];
 
 amqp.connect(pipeAddressIn, function(error0, connection) {
@@ -37,7 +36,7 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
       channel.assertExchange(pipeIn, 'topic');
       console.log("Waiting for messages on topic exchange %s with routing key %s.", pipeIn, inRoutingKey);
 
-      //temp queue for consuming from topic
+      // temp queue for consuming from topic
       channel.assertQueue('', { exclusive: true }, function(error2, q) {
         if (error2) {
           throw error2;
@@ -60,28 +59,31 @@ amqp.connect(pipeAddressIn, function(error0, connection) {
 function handleIncomingMessage(channel, msg) {
   const message = JSON.parse(msg.content.toString());
 
-  //check if message is valid
-  const isValid = dataToAggregate.every(field => message.data && field in message.data);
+  // check if the message contains all the fields specified in dataToAggregate
+  const isValid = dataToAggregate.every(fieldPath => {
+    return getFieldValue(message, fieldPath) !== undefined;
+  });
 
   if (isValid) {
-    //valid messages adding to buffer
+    // only messages with all the fields are added to the buffer
     messageBuffer.push(message);
     console.log(`Buffered message: ${JSON.stringify(message)}`);
   } else {
     console.log(`Message skipped due to missing fields: ${JSON.stringify(message)}`);
   }
 
-  //only when enough messages got buffered, start aggregation
+  //only when enough messages are buffered it starts aggregation
   if (messageBuffer.length >= count) {
     const aggregatedData = messageBuffer.map(msg => {
       const aggregatedItem = {};
-      dataToAggregate.forEach(field => {
-        aggregatedItem[field] = msg.data[field];
+      dataToAggregate.forEach(fieldPath => {
+        const fieldKey = fieldPath.split('.').pop(); // Get the last part of the path for the key
+        aggregatedItem[fieldKey] = getFieldValue(msg, fieldPath);
       });
       return aggregatedItem;
     });
 
-    //create cloud event message with aggregated data
+    //creates CloudEvent message with aggregated data
     const cloudEventMessage = {
       specversion: '1.0',
       id: `id-${Math.random()}`,
@@ -104,7 +106,13 @@ function handleIncomingMessage(channel, msg) {
     } else {
       console.error(`Unknown pipe type for output: ${pipeTypeOut}`);
     }
+
     messageBuffer = [];
   }
   channel.ack(msg);
+}
+
+function getFieldValue(obj, fieldPath) {
+  const adjustedPath = fieldPath.replace(/^message\./, '');
+  return adjustedPath.split('.').reduce((o, key) => (o && o[key] !== undefined) ? o[key] : undefined, obj);
 }

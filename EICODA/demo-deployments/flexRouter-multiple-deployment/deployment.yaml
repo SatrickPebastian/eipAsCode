@@ -1,0 +1,45 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec
+      name: "numberPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec8e
+      name: "worldPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029
+      name: "messagePipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 577a26d2-216
+    name: "worldSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"greeting": "Hello World", "number": 1}'
+    mappings:
+      - "out:messagePipe"
+  - id: 577a26d2-216c-4e6e-95e0-e
+    name: "myFlexRouter"
+    host: "devDockerCompose"
+    type: "FlexRouter"
+    criteria: "criteria.json"
+    mode: "multiple"
+    mappings:
+      - "in:messagePipe"
+      - "outOne:worldPipe"
+      - "outTwo:numberPipe"
+  - id: 577a26
+    name: "worldReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:worldPipe"
+  - id: 577a26d2-21
+    name: "numberReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:numberPipe"

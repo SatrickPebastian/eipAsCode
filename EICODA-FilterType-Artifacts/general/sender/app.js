@@ -30,7 +30,6 @@ amqp.connect(pipeAddress, function(error0, connection) {
       channel.assertQueue(pipe);
 
       const sendMessage = () => {
-        // Create a new CloudEvent message for each call
         const cloudEventMessage = {
           specversion: '1.0',
           id: `id-${Math.random()}`,
@@ -49,7 +48,7 @@ amqp.connect(pipeAddress, function(error0, connection) {
       channel.assertExchange(pipe, 'topic');
 
       const sendMessage = () => {
-        // Create a new CloudEvent message
+        // creates  new CloudEvent message
         const cloudEventMessage = {
           specversion: '1.0',
           id: `id-${Math.random()}`,

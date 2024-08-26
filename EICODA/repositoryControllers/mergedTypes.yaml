@@ -28,6 +28,7 @@ filterTypes:
   - name: criteria
     file: true
 - name: Splitter
+  artifact: SplitterArtifact
   configs:
   - name: data
   - name: eventType
@@ -39,7 +40,7 @@ filterTypes:
   configs:
   - name: data
   - name: count
-  - eventType:
+  - name: eventType
     default: default
   - name: source
     default: /default/source

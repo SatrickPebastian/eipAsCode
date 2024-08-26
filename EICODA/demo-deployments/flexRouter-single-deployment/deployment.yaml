@@ -1,0 +1,51 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec
+      name: "reutlingenPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec8e
+      name: "worldPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029
+      name: "messagePipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 577a26d2-216
+    name: "reutlingenSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"greeting": "Hello Reutlingen"}'
+    mappings:
+      - "out:messagePipe"
+  - id: 577a26d2-216c-4e6
+    name: "worldSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"greeting": "Hello World"}'
+    mappings:
+      - "out:messagePipe"
+  - id: 577a26d2-216c-4e6e-95e0-e
+    name: "myFlexRouter"
+    host: "devDockerCompose"
+    type: "FlexRouter"
+    criteria: "criteria.json"
+    mappings:
+      - "in:messagePipe"
+      - "outOne:worldPipe"
+      - "outTwo:reutlingenPipe"
+  - id: 577a26
+    name: "worldReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:worldPipe"
+  - id: 577a26d2-21
+    name: "reutlingenReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:reutlingenPipe"

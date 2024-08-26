@@ -10,44 +10,59 @@ const outRoutingKey = process.env.outRoutingKey || '';
 const criteriaPath = '/etc/config/criteria';
 const transformationLogic = JSON.parse(fs.readFileSync(criteriaPath, 'utf8'));
 
-amqp.connect(pipeAddressIn, function(error0, connection) {
+amqp.connect(pipeAddressIn, function (error0, connection) {
   if (error0) {
-    throw error0;
+    console.error("Failed to connect to RabbitMQ", error0);
+    process.exit(1);
   }
 
-  connection.createChannel(function(error1, channel) {
+  connection.createChannel(function (error1, channel) {
     if (error1) {
-      throw error1;
+      console.error("Failed to create channel", error1);
+      process.exit(1);
     }
 
-    setupInputPipe(channel, pipeIn, pipeTypeIn, function(inputQueue) {
+    setupInputPipe(channel, pipeIn, pipeTypeIn, function (inputQueue) {
       setupOutputPipe(channel, pipeOut, pipeTypeOut);
 
       console.log("Waiting for messages in %s.", inputQueue);
 
-      channel.consume(inputQueue, function(msg) {
-        const message = JSON.parse(msg.content.toString());
+      channel.consume(
+        inputQueue,
+        function (msg) {
+          try {
+            const message = JSON.parse(msg.content.toString());
 
-        // apply jsonata translation to the entire message object
-        const transformedData = {};
-        for (let [key, expr] of Object.entries(transformationLogic)) {
-          const expression = jsonata(expr);
-          transformedData[key] = expression.evaluate(message); 
+            //apply jsonata translation
+            const transformedData = {};
+            for (let [key, expr] of Object.entries(transformationLogic)) {
+              const expression = jsonata(expr);
+              transformedData[key] = expression.evaluate({ message });
+            }
+
+            // create new message with transformed data in it
+            const translatedMessage = {
+              specversion: message.specversion,
+              id: message.id,
+              source: message.source,
+              type: message.type,
+              time: message.time,
+              data: transformedData,
+            };
+
+            sendToOutputPipe(channel, pipeOut, pipeTypeOut, translatedMessage);
+            console.log("Sent translated message to %s: %s", pipeOut, JSON.stringify(translatedMessage));
+
+            channel.ack(msg);
+          } catch (err) {
+            console.error("Failed to process message", err);
+            channel.nack(msg, false, false);
+          }
+        },
+        {
+          noAck: false,
         }
-
-        // merge translated data back into consumed message
-        const translatedMessage = {
-          ...message, 
-          data: transformedData
-        };
-
-        sendToOutputPipe(channel, pipeOut, pipeTypeOut, translatedMessage);
-        console.log("Sent translated message to %s: %s", pipeOut, JSON.stringify(translatedMessage));
-
-        channel.ack(msg);
-      }, {
-        noAck: false
-      });
+      );
     });
   });
 });
@@ -58,7 +73,7 @@ function setupInputPipe(channel, pipeIn, pipeTypeIn, callback) {
     callback(pipeIn);
   } else if (pipeTypeIn === 'topic') {
     channel.assertExchange(pipeIn, 'topic');
-    channel.assertQueue('', { exclusive: true }, function(error2, q) {
+    channel.assertQueue('', { exclusive: true }, function (error2, q) {
       if (error2) {
         throw error2;
       }
@@ -80,7 +95,6 @@ function setupOutputPipe(channel, pipeOut, pipeTypeOut) {
   }
 }
 
-//sends message to the correct output pipe
 function sendToOutputPipe(channel, pipeOut, pipeTypeOut, message) {
   if (pipeTypeOut === 'queue') {
     channel.sendToQueue(pipeOut, Buffer.from(JSON.stringify(message)));

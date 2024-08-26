@@ -1,0 +1,56 @@
+pipes:
+  queues:
+    - id: 3b76043e-676b-4029-9008-b0215cec
+      name: "resultPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+    - id: 3b76043e-676b-4029-9008-b0215cec8e
+      name: "numberPipe"
+      host: "devRabbitMQ"
+      protocol: "amqp"
+
+filters:
+  - id: 577a26d2-216
+    name: "EinsSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"number": "1"}'
+    mappings:
+      - "out:numberPipe"
+  - id: 577a26d2-216c-4e6
+    name: "zweiSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"number": "2"}'
+    mappings:
+      - "out:numberPipe"
+  - id: 577a26d2-216c-4e6e-95e
+    name: "vierSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"number": "4"}'
+    mappings:
+      - "out:numberPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808f83
+    name: "dreiSender"
+    host: "devDockerCompose"
+    type: "Sender"
+    data: '{"number": "3"}'
+    mappings:
+      - "out:numberPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7
+    name: "myResequencer"
+    host: "devDockerCompose"
+    type: "Resequencer"
+    data: "message.data.number"
+    mode: "desc"
+    count: "4"
+    mappings:
+      - "in:numberPipe"
+      - "out:resultPipe"
+  - id: 577a26d2-216c-4e6e-95e0-e7808
+    name: "myReceiver"
+    host: "devDockerCompose"
+    type: "Receiver"
+    mappings:
+      - "in:resultPipe"

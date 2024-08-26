@@ -17,7 +17,7 @@ func (p *DockerComposePlugin) Execute() error {
 		return fmt.Errorf("docker-compose.yaml file not found: %w", err)
 	}
 
-	cmd := exec.Command("docker-compose", "-f", dockerComposeModelPath, "up", "-d")
+	cmd := exec.Command("docker-compose", "-f", dockerComposeModelPath, "up", "-d", "--pull", "always")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply docker-compose.yaml: %w, output: %s", err, string(output))
@@ -35,7 +35,7 @@ func (p *DockerComposePlugin) Destroy() error {
 		return nil
 	}
 
-	cmd := exec.Command("docker-compose", "-f", dockerComposeModelPath, "down")
+	cmd := exec.Command("docker-compose", "-f", dockerComposeModelPath, "down", "--rmi", "all", "--volumes", "--remove-orphans")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		//handles cases where the services or containers might not exist

@@ -126,6 +126,7 @@ function routeMessageMultiple(message) {
       destinations.push(rule.destination);
     }
   }
+  
   if (destinations.length === 0 && routingLogic.default) {
     destinations.push(routingLogic.default);
   }
