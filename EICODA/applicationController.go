@@ -155,10 +155,22 @@ func (app *ApplicationController) transformModel(model *models.Model, baseDir st
 }
 
 func (app *ApplicationController) executePlugins(model *models.Model, noTf bool) error {
+
+	//handles errors if anything goes seriously wrong during program execution
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("A panic occurred during plugin execution, initiating cleanup...")
+			app.cleanupPlugins()
+			panic(r)
+		}
+	}()
+
 	if !noTf {
 		fmt.Println("Executing Terraform plugin if needed...")
 		if app.shouldTransformRabbitMQ(model) {
 			if err := app.plugins["Terraform"].Execute(); err != nil {
+				fmt.Printf("Terraform plugin execution failed: %v. Initiating cleanup...\n", err)
+				app.cleanupPlugins()
 				return fmt.Errorf("Terraform plugin execution failed: %w", err)
 			}
 		}
@@ -168,12 +180,16 @@ func (app *ApplicationController) executePlugins(model *models.Model, noTf bool)
 	fmt.Println("Executing Kubernetes plugin if needed...")
 	if app.shouldTransformKubernetes(model) {
 		if err := app.plugins["Kubernetes"].Execute(); err != nil {
+			fmt.Printf("Kubernetes plugin execution failed: %v. Initiating cleanup...\n", err)
+			app.cleanupPlugins()
 			return fmt.Errorf("Kubernetes plugin execution failed: %w", err)
 		}
 	}
 	fmt.Println("Executing DockerCompose plugin if needed...")
 	if app.shouldTransformDockerCompose(model) {
 		if err := app.plugins["DockerCompose"].Execute(); err != nil {
+			fmt.Printf("DockerCompose plugin execution failed: %v. Initiating cleanup...\n", err)
+			app.cleanupPlugins()
 			return fmt.Errorf("DockerCompose plugin execution failed: %w", err)
 		}
 	}
@@ -217,6 +233,25 @@ func (app *ApplicationController) shouldTransformRabbitMQ(model *models.Model) b
 		}
 	}
 	return false
+}
+
+// handle clean up if any of the plugins fail to execute the deployment
+func (app *ApplicationController) cleanupPlugins() {
+	fmt.Println("Starting cleanup process...")
+
+	if err := app.plugins["Kubernetes"].Destroy(); err != nil {
+		fmt.Printf("Failed to destroy Kubernetes resources during cleanup: %v\n", err)
+	}
+
+	if err := app.plugins["DockerCompose"].Destroy(); err != nil {
+		fmt.Printf("Failed to destroy DockerCompose resources during cleanup: %v\n", err)
+	}
+
+	if err := app.plugins["Terraform"].Destroy(); err != nil {
+		fmt.Printf("Failed to destroy Terraform resources during cleanup: %v\n", err)
+	}
+
+	fmt.Println("Cleanup process completed.")
 }
 
 //defines necessary interface of plugins

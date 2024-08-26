@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -10,10 +11,8 @@ import (
 type DockerComposePlugin struct{}
 
 func (p *DockerComposePlugin) Execute() error {
-	// Defines path to the Docker Compose model file
 	dockerComposeModelPath := filepath.Join("docker-compose.yaml")
 
-	// Check if the file exists
 	if _, err := exec.Command("test", "-f", dockerComposeModelPath).Output(); err != nil {
 		return fmt.Errorf("docker-compose.yaml file not found: %w", err)
 	}
@@ -31,8 +30,9 @@ func (p *DockerComposePlugin) Execute() error {
 func (p *DockerComposePlugin) Destroy() error {
 	dockerComposeModelPath := filepath.Join("docker-compose.yaml")
 
-	if _, err := exec.Command("test", "-f", dockerComposeModelPath).Output(); err != nil {
-		return fmt.Errorf("docker-compose.yaml file not found: %w", err)
+	if _, err := os.Stat(dockerComposeModelPath); os.IsNotExist(err) {
+		fmt.Println("docker-compose.yaml file not found. Skipping destruction process.")
+		return nil
 	}
 
 	cmd := exec.Command("docker-compose", "-f", dockerComposeModelPath, "down")

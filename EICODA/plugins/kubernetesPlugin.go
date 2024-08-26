@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -22,7 +23,6 @@ func (p *KubernetesPlugin) Execute() error {
 		return fmt.Errorf("failed to apply kubernetesModel.yaml: %w, output: %s", err, string(output))
 	}
 
-	// checks the status, assumes the deployments have same names as filters
 	checkCmd := exec.Command("kubectl", "get", "deployments")
 	checkOutput, err := checkCmd.CombinedOutput()
 	if err != nil {
@@ -36,8 +36,9 @@ func (p *KubernetesPlugin) Execute() error {
 func (p *KubernetesPlugin) Destroy() error {
 	kubernetesModelPath := filepath.Join(".", "kubernetesModel.yaml")
 
-	if _, err := exec.Command("test", "-f", kubernetesModelPath).Output(); err != nil {
-		return fmt.Errorf("kubernetesModel.yaml file not found: %w", err)
+	if _, err := os.Stat(kubernetesModelPath); os.IsNotExist(err) {
+		fmt.Println("kubernetesModel.yaml file not found. Skipping destruction process.")
+		return nil
 	}
 
 	cmd := exec.Command("kubectl", "delete", "-f", kubernetesModelPath)

@@ -13,7 +13,7 @@ type TerraformPlugin struct{}
 func (p *TerraformPlugin) Execute() error {
 	terraformModelPath := filepath.Join(".", "rabbitMqModel.tf")
 
-	if _, err := exec.Command("test", "-f", terraformModelPath).Output(); err != nil {
+	if _, err := os.Stat(terraformModelPath); os.IsNotExist(err) {
 		return fmt.Errorf("rabbitMqModel.tf file not found: %w", err)
 	}
 
@@ -22,8 +22,8 @@ func (p *TerraformPlugin) Execute() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize Terraform: %w, output: %s", err, string(initOutput))
 	}
-	applyCmd := exec.Command("terraform", "apply", "-auto-approve")
 
+	applyCmd := exec.Command("terraform", "apply", "-auto-approve")
 	applyCmd.Stdout = os.Stdout
 	applyCmd.Stderr = os.Stderr
 
@@ -45,8 +45,9 @@ func (p *TerraformPlugin) Execute() error {
 func (p *TerraformPlugin) Destroy() error {
 	terraformModelPath := filepath.Join(".", "rabbitMqModel.tf")
 
-	if _, err := exec.Command("test", "-f", terraformModelPath).Output(); err != nil {
-		return fmt.Errorf("rabbitMqModel.tf file not found: %w", err)
+	if _, err := os.Stat(terraformModelPath); os.IsNotExist(err) {
+		fmt.Println("rabbitMqModel.tf file not found. Skipping destruction process.")
+		return nil
 	}
 
 	initCmd := exec.Command("terraform", "init")
